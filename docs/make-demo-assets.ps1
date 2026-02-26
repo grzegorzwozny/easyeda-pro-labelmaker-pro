@@ -5,7 +5,7 @@ param(
 	[string]$OutputImage = "docs/image.png",
 	[int]$Width = 960,
 	[int]$Fps = 10,
-	[double]$StillAtSeconds = 2.0
+	[double]$StillAtSeconds = 5.0
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,7 +14,7 @@ if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
 	throw "ffmpeg not found in PATH."
 }
 
-if (-not (Test-Path $InputMp4)) {
+if (-not (Test-Path -LiteralPath $InputMp4)) {
 	throw "Input video not found: $InputMp4"
 }
 
@@ -25,7 +25,7 @@ if ($LASTEXITCODE -ne 0) {
 	throw "Palette generation failed."
 }
 
-ffmpeg -y -i $InputMp4 -i $palette -lavfi "fps=$Fps,scale=$Width:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" $OutputGif | Out-Null
+ffmpeg -y -i $InputMp4 -i $palette -lavfi "fps=$Fps,scale=$Width:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=sierra2_4a:diff_mode=rectangle" $OutputGif | Out-Null
 if ($LASTEXITCODE -ne 0) {
 	throw "GIF generation failed."
 }
@@ -35,11 +35,10 @@ if ($LASTEXITCODE -ne 0) {
 	throw "Screenshot generation failed."
 }
 
-if (Test-Path $palette) {
-	Remove-Item -Path $palette -Force
+if (Test-Path -LiteralPath $palette) {
+	Remove-Item -LiteralPath $palette -Force
 }
 
 Write-Host "Generated:"
 Write-Host " - $OutputGif"
 Write-Host " - $OutputImage"
-
