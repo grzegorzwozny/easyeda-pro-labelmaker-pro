@@ -1,0 +1,7 @@
+{
+	"About": "关于",
+	"Label Maker Pro": "标签生成器 Pro",
+	"Label Maker Pro v": "标签生成器 Pro v${1}",
+	"Create silkscreen labels with cutout text.": "用于在丝印层生成镂空文字标签。",
+	"Label Maker Pro is only available in PCB editor.": "标签生成器 Pro 仅支持在 PCB 编辑器中使用。"
+}

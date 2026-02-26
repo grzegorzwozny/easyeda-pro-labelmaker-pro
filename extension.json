@@ -1,0 +1,53 @@
+{
+	"name": "eext-labelmaker-pro",
+	"uuid": "9c6e8a9f4b31409bb5fc4f61af8f2b74",
+	"displayName": "Label Maker Pro",
+	"description": "Create shaped silkscreen labels with cutout text for PCB designs.",
+	"version": "1.0.0",
+	"publisher": "grzegorzwozny",
+	"engines": {
+		"eda": "^3.0.0"
+	},
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "github",
+		"url": "https://github.com/grzegorzwozny/easyeda-pro-labelmaker-pro"
+	},
+	"categories": "PCB",
+	"keywords": [
+		"PCB",
+		"Silkscreen",
+		"Label",
+		"Text"
+	],
+	"images": {
+		"logo": "./images/logo.png"
+	},
+	"homepage": "https://github.com/grzegorzwozny/easyeda-pro-labelmaker-pro",
+	"bugs": "https://github.com/grzegorzwozny/easyeda-pro-labelmaker-pro/issues",
+	"activationEvents": {},
+	"entry": "./dist/index",
+	"dependentExtensions": {},
+	"headerMenus": {
+		"home": [],
+		"sch": [],
+		"pcb": [
+			{
+				"id": "Label Maker",
+				"title": "Label Maker",
+				"menuItems": [
+					{
+						"id": "Open Label Maker...",
+						"title": "Open Label Maker...",
+						"registerFn": "openLabelMaker"
+					},
+					{
+						"id": "About...",
+						"title": "About...",
+						"registerFn": "about"
+					}
+				]
+			}
+		]
+	}
+}

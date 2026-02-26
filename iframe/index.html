@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Label Maker Pro</title>
+		<style>
+			:root {
+				--bg: #f4f7fb;
+				--panel: #ffffff;
+				--line: #d7e0eb;
+				--text: #203040;
+				--text-soft: #5b6f83;
+				--primary: #0f74d9;
+				--primary-hover: #0b5fb3;
+				--danger: #cc3d3d;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				padding: 12px;
+				background: var(--bg);
+				color: var(--text);
+				font: 13px/1.4 "Segoe UI", "Tahoma", sans-serif;
+			}
+
+			.app {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+
+			.header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px;
+			}
+
+			.title {
+				font-size: 18px;
+				font-weight: 600;
+				margin: 0;
+			}
+
+			.subtitle {
+				margin: 0;
+				color: var(--text-soft);
+				font-size: 12px;
+			}
+
+			.panel {
+				background: var(--panel);
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				padding: 10px;
+				display: grid;
+				gap: 10px;
+			}
+
+			.row {
+				display: grid;
+				gap: 8px;
+			}
+
+			.row.cols-2 {
+				grid-template-columns: 1fr 1fr;
+			}
+
+			.row.cols-3 {
+				grid-template-columns: 1fr 1fr 1fr;
+			}
+
+			label {
+				display: grid;
+				gap: 4px;
+				font-size: 12px;
+				color: var(--text-soft);
+			}
+
+			input,
+			select,
+			button {
+				font: inherit;
+			}
+
+			input,
+			select {
+				width: 100%;
+				padding: 7px 8px;
+				border: 1px solid var(--line);
+				border-radius: 7px;
+				background: #fff;
+				color: var(--text);
+			}
+
+			.hstack {
+				display: flex;
+				gap: 8px;
+				align-items: end;
+			}
+
+			.hstack > * {
+				flex: 1;
+			}
+
+			.tools {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+			}
+
+			.tools button {
+				flex: 1;
+				min-width: 80px;
+			}
+
+			.preview-wrap {
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				background: linear-gradient(180deg, #fefefe, #f7fbff);
+				padding: 8px;
+				display: grid;
+				gap: 6px;
+			}
+
+			#previewCanvas {
+				width: 100%;
+				height: 180px;
+				border: 1px solid #e4ebf3;
+				border-radius: 6px;
+				background:
+					linear-gradient(90deg, rgba(15, 116, 217, 0.04) 1px, transparent 1px) 0 0 / 20px 20px,
+					linear-gradient(0deg, rgba(15, 116, 217, 0.04) 1px, transparent 1px) 0 0 / 20px 20px,
+					#fbfdff;
+			}
+
+			.preview-meta {
+				color: var(--text-soft);
+				font-size: 12px;
+			}
+
+			.actions {
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+
+			button {
+				border: 0;
+				border-radius: 8px;
+				padding: 8px 11px;
+				cursor: pointer;
+				background: #e7edf5;
+				color: #13293d;
+			}
+
+			button.primary {
+				background: var(--primary);
+				color: #fff;
+				font-weight: 600;
+			}
+
+			button.primary:hover {
+				background: var(--primary-hover);
+			}
+
+			button.danger {
+				background: #ffe9e9;
+				color: var(--danger);
+			}
+
+			button:disabled {
+				opacity: 0.55;
+				cursor: not-allowed;
+			}
+
+			.status {
+				border-radius: 8px;
+				padding: 8px 10px;
+				font-size: 12px;
+				background: #edf5ff;
+				color: #1f4f84;
+				border: 1px solid #cddff5;
+			}
+
+			.status.error {
+				background: #fff1f1;
+				color: #8a2f2f;
+				border-color: #f0c5c5;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="app">
+			<header class="header">
+				<div>
+					<h1 class="title">Label Maker Pro</h1>
+					<p class="subtitle">Shaped labels with text cutout. All dimensions are in mil.</p>
+				</div>
+			</header>
+
+			<div class="panel">
+				<div class="row">
+					<div class="hstack">
+						<label>
+							Preset
+							<select id="presetSelect"></select>
+						</label>
+						<div class="tools">
+							<button id="savePresetBtn" type="button">Save As</button>
+							<button id="updatePresetBtn" type="button">Update</button>
+							<button id="deletePresetBtn" class="danger" type="button">Delete</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="row cols-3">
+					<label>
+						Left Shape
+						<select id="leftShape"></select>
+					</label>
+					<label>
+						Label Text
+						<input id="labelText" type="text" maxlength="80" placeholder="GND" />
+					</label>
+					<label>
+						Right Shape
+						<select id="rightShape"></select>
+					</label>
+				</div>
+
+				<div class="row cols-3">
+					<label>
+						Font
+						<select id="fontFamily"></select>
+					</label>
+					<label>
+						Weight
+						<select id="fontWeight">
+							<option value="400">400 Regular</option>
+							<option value="500">500 Medium</option>
+							<option value="600">600 SemiBold</option>
+							<option value="700">700 Bold</option>
+							<option value="800">800 ExtraBold</option>
+						</select>
+					</label>
+					<label>
+						Layer
+						<select id="layer">
+							<option value="3">Top Silkscreen</option>
+							<option value="4">Bottom Silkscreen</option>
+						</select>
+					</label>
+				</div>
+
+				<div class="row">
+					<div class="hstack">
+						<label>
+							Quality
+							<select id="quality">
+								<option value="ultra">Ultra Smooth</option>
+								<option value="balanced">Balanced</option>
+								<option value="fast">Fast</option>
+							</select>
+						</label>
+						<div class="tools">
+							<button id="addFontBtn" type="button">Add Font Name</button>
+							<button id="importFontBtn" type="button">Load Font File</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="row cols-3">
+					<label>
+						Font Size
+						<input id="fontSize" type="number" step="1" min="2" max="1000" />
+					</label>
+					<label>
+						Padding X
+						<input id="paddingX" type="number" step="1" min="-200" max="1000" />
+					</label>
+					<label>
+						Padding Y
+						<input id="paddingY" type="number" step="1" min="-200" max="1000" />
+					</label>
+				</div>
+
+				<div class="row cols-3">
+					<label>
+						Width (0 = Auto)
+						<input id="labelWidth" type="number" step="1" min="0" max="20000" />
+					</label>
+					<label>
+						Align
+						<select id="textAlign">
+							<option value="left">Left</option>
+							<option value="center">Center</option>
+							<option value="right">Right</option>
+						</select>
+					</label>
+					<label>
+						Bottom Mirror
+						<select id="mirror">
+							<option value="false">No</option>
+							<option value="true">Yes</option>
+						</select>
+					</label>
+				</div>
+
+				<div class="preview-wrap">
+					<canvas id="previewCanvas" width="540" height="180"></canvas>
+					<div class="preview-meta" id="previewMeta">Label size: -- x -- mil</div>
+				</div>
+
+				<div class="actions">
+					<button id="placeBtn" class="primary" type="button">Place Label</button>
+					<button id="closeBtn" type="button">Close</button>
+				</div>
+
+				<div class="status" id="statusLine">Ready. Move your cursor on PCB and click "Place Label".</div>
+			</div>
+		</div>
+
+		<script>
+			(() => {
+				const STORAGE_OPTIONS_KEY = 'labelMaker.options.v1';
+				const STORAGE_PRESETS_KEY = 'labelMaker.presets.v1';
+				const IFRAME_ID = 'label-maker-pro-window';
+				const MIN_POLYGON_AREA_MIL2 = 0.6;
+				const QUALITY_PROFILES = {
+					ultra: {
+						rasterScale: 12,
+						tolerance: 0.05,
+						simplification: 0,
+						smoothing: 1.28,
+						despeckling: 0,
+						binarize: false,
+					},
+					balanced: {
+						rasterScale: 5,
+						tolerance: 0.2,
+						simplification: 0.1,
+						smoothing: 0.95,
+						despeckling: 0.3,
+						binarize: false,
+					},
+					fast: {
+						rasterScale: 3,
+						tolerance: 0.3,
+						simplification: 0.2,
+						smoothing: 0.45,
+						despeckling: 1,
+						binarize: true,
+					},
+				};
+
+				const SHAPES = ['(', ')', '<', '>', '/', '\\', '|', '[', ']'];
+				const DEFAULT_OPTIONS = {
+					leftShape: '(',
+					rightShape: ')',
+					text: 'GND',
+					font: 'Arial',
+					fontWeight: 700,
+					size: 55,
+					paddingX: 10,
+					paddingY: 6,
+					width: 0,
+					textAlign: 'left',
+					layer: 3,
+					mirror: false,
+					quality: 'ultra',
+				};
+
+				const elements = {
+					presetSelect: document.getElementById('presetSelect'),
+					savePresetBtn: document.getElementById('savePresetBtn'),
+					updatePresetBtn: document.getElementById('updatePresetBtn'),
+					deletePresetBtn: document.getElementById('deletePresetBtn'),
+					leftShape: document.getElementById('leftShape'),
+					rightShape: document.getElementById('rightShape'),
+					labelText: document.getElementById('labelText'),
+					fontFamily: document.getElementById('fontFamily'),
+					fontWeight: document.getElementById('fontWeight'),
+					layer: document.getElementById('layer'),
+					quality: document.getElementById('quality'),
+					addFontBtn: document.getElementById('addFontBtn'),
+					importFontBtn: document.getElementById('importFontBtn'),
+					fontSize: document.getElementById('fontSize'),
+					paddingX: document.getElementById('paddingX'),
+					paddingY: document.getElementById('paddingY'),
+					labelWidth: document.getElementById('labelWidth'),
+					textAlign: document.getElementById('textAlign'),
+					mirror: document.getElementById('mirror'),
+					previewCanvas: document.getElementById('previewCanvas'),
+					previewMeta: document.getElementById('previewMeta'),
+					placeBtn: document.getElementById('placeBtn'),
+					closeBtn: document.getElementById('closeBtn'),
+					statusLine: document.getElementById('statusLine'),
+				};
+
+				const previewContext = elements.previewCanvas.getContext('2d');
+				const previewBufferCanvas = document.createElement('canvas');
+				const previewBufferContext = previewBufferCanvas.getContext('2d');
+				const measureCanvas = document.createElement('canvas');
+				const measureContext = measureCanvas.getContext('2d');
+
+				let placing = false;
+				let presetMap = { Default: { ...DEFAULT_OPTIONS } };
+				let fontsList = ['Arial'];
+				const runtimeFontFaces = new Map();
+				let previewFrameHandle = null;
+				let floatingPlacement = null;
+				const FLOAT_PLACE_EVENT_ID = 'labelmaker-pro-float-place-click';
+				let systemFontsLoaded = false;
+
+				function setStatus(message, isError = false) {
+					elements.statusLine.textContent = message;
+					elements.statusLine.classList.toggle('error', Boolean(isError));
+				}
+
+				function clampNumber(value, minimum, maximum, fallback) {
+					const n = Number(value);
+					if (!Number.isFinite(n)) {
+						return fallback;
+					}
+					return Math.min(maximum, Math.max(minimum, n));
+				}
+
+				function sanitizeOptions(raw) {
+					const next = { ...DEFAULT_OPTIONS };
+					if (!raw || typeof raw !== 'object') {
+						return next;
+					}
+
+					if (SHAPES.includes(raw.leftShape)) next.leftShape = raw.leftShape;
+					if (SHAPES.includes(raw.rightShape)) next.rightShape = raw.rightShape;
+					next.text = typeof raw.text === 'string' ? raw.text.slice(0, 80) : next.text;
+					next.font = typeof raw.font === 'string' && raw.font.length ? raw.font : next.font;
+					next.fontWeight = clampNumber(raw.fontWeight, 400, 900, next.fontWeight);
+					next.size = clampNumber(raw.size, 2, 1000, next.size);
+					next.paddingX = clampNumber(raw.paddingX, -200, 1000, next.paddingX);
+					next.paddingY = clampNumber(raw.paddingY, -200, 1000, next.paddingY);
+					next.width = clampNumber(raw.width, 0, 20000, next.width);
+					next.textAlign = ['left', 'center', 'right'].includes(raw.textAlign) ? raw.textAlign : next.textAlign;
+					next.layer = Number(raw.layer) === 4 ? 4 : 3;
+					next.mirror = Boolean(raw.mirror);
+					next.quality = ['ultra', 'balanced', 'fast'].includes(raw.quality) ? raw.quality : next.quality;
+					return next;
+				}
+
+				function getFormOptions() {
+					return sanitizeOptions({
+						leftShape: elements.leftShape.value,
+						rightShape: elements.rightShape.value,
+						text: elements.labelText.value,
+						font: elements.fontFamily.value,
+						fontWeight: elements.fontWeight.value,
+						size: elements.fontSize.value,
+						paddingX: elements.paddingX.value,
+						paddingY: elements.paddingY.value,
+						width: elements.labelWidth.value,
+						textAlign: elements.textAlign.value,
+						layer: elements.layer.value,
+						mirror: elements.mirror.value === 'true',
+						quality: elements.quality.value,
+					});
+				}
+
+				function setFormOptions(options) {
+					elements.leftShape.value = options.leftShape;
+					elements.rightShape.value = options.rightShape;
+					elements.labelText.value = options.text;
+					elements.fontFamily.value = options.font;
+					elements.fontWeight.value = String(options.fontWeight);
+					elements.fontSize.value = String(options.size);
+					elements.paddingX.value = String(options.paddingX);
+					elements.paddingY.value = String(options.paddingY);
+					elements.labelWidth.value = String(options.width);
+					elements.textAlign.value = options.textAlign;
+					elements.layer.value = String(options.layer);
+					elements.mirror.value = String(options.mirror);
+					elements.quality.value = options.quality;
+				}
+
+				function populateShapeSelects() {
+					const optionsHtml = SHAPES.map((shape) => `<option value="${shape}">${shape}</option>`).join('');
+					elements.leftShape.innerHTML = optionsHtml;
+					elements.rightShape.innerHTML = optionsHtml;
+				}
+
+				function ensureFontInList(fontName) {
+					if (!fontName || fontsList.includes(fontName)) {
+						return;
+					}
+					fontsList.push(fontName);
+					fontsList.sort((a, b) => a.localeCompare(b));
+				}
+
+				function refreshFontSelect(selectedFont) {
+					ensureFontInList(selectedFont);
+					elements.fontFamily.innerHTML = fontsList
+						.map((font) => `<option value="${font}">${font}</option>`)
+						.join('');
+					elements.fontFamily.value = selectedFont;
+				}
+
+				async function loadFonts() {
+					try {
+						if (window.eda?.sys_FontManager?.getFontsList) {
+							const fonts = await eda.sys_FontManager.getFontsList();
+							if (Array.isArray(fonts) && fonts.length > 0) {
+								fontsList = Array.from(new Set(fonts.filter((font) => typeof font === 'string' && font.trim())));
+							}
+						}
+					} catch (error) {
+						console.warn('loadFonts failed', error);
+					}
+
+					if (!systemFontsLoaded && typeof window.queryLocalFonts === 'function') {
+						try {
+							const localFonts = await window.queryLocalFonts();
+							if (Array.isArray(localFonts) && localFonts.length > 0) {
+								for (const item of localFonts) {
+									if (item?.fullName) {
+										fontsList.push(String(item.fullName).trim());
+									}
+									if (item?.family) {
+										fontsList.push(String(item.family).trim());
+									}
+								}
+							}
+							systemFontsLoaded = true;
+						} catch (error) {
+							console.warn('queryLocalFonts unavailable', error);
+						}
+					}
+
+					if (!fontsList.length) {
+						fontsList = ['Arial', 'Liberation Sans', 'Tahoma'];
+					}
+					for (const runtimeFamily of runtimeFontFaces.keys()) {
+						if (!fontsList.includes(runtimeFamily)) {
+							fontsList.push(runtimeFamily);
+						}
+					}
+					fontsList = Array.from(new Set(fontsList.filter(Boolean)));
+					fontsList.sort((a, b) => a.localeCompare(b));
+				}
+
+				async function addFontByName() {
+					const fontNameRaw = window.prompt('Enter system font name (exact):');
+					if (!fontNameRaw) {
+						return;
+					}
+					const fontName = fontNameRaw.trim();
+					if (!fontName) {
+						setStatus('Font name cannot be empty.', true);
+						return;
+					}
+					try {
+						if (window.eda?.sys_FontManager?.addFont) {
+							const ok = await eda.sys_FontManager.addFont(fontName);
+							if (!ok) {
+								throw new Error('FontManager rejected this font name.');
+							}
+						}
+						await loadFonts();
+						refreshFontSelect(fontName);
+						handleOptionChanged();
+						setStatus(`Font "${fontName}" added.`);
+					} catch (error) {
+						console.error(error);
+						setStatus(`Add font failed: ${error.message || error}`, true);
+					}
+				}
+
+				async function importFontFromFile() {
+					try {
+						if (!window.eda?.sys_FileSystem?.openReadFileDialog) {
+							throw new Error('File API is not available.');
+						}
+						const file = await eda.sys_FileSystem.openReadFileDialog(['ttf', 'otf', 'woff', 'woff2'], false);
+						if (!file) {
+							return;
+						}
+						const fallbackName = (file.name || 'CustomFont').replace(/\.[^.]+$/, '');
+						const familyRaw = window.prompt('Font family name for this session:', fallbackName);
+						if (!familyRaw) {
+							return;
+						}
+						const family = familyRaw.trim();
+						if (!family) {
+							setStatus('Font family name cannot be empty.', true);
+							return;
+						}
+						const data = await file.arrayBuffer();
+						const fontFace = new FontFace(family, data);
+						await fontFace.load();
+						document.fonts.add(fontFace);
+						runtimeFontFaces.set(family, fontFace);
+						ensureFontInList(family);
+						refreshFontSelect(family);
+						handleOptionChanged();
+						setStatus(`Runtime font "${family}" loaded.`);
+					} catch (error) {
+						console.error(error);
+						setStatus(`Load font file failed: ${error.message || error}`, true);
+					}
+				}
+
+				function getRenderableText(textValue) {
+					const text = String(textValue || '').trim();
+					return text.length ? text : '?';
+				}
+
+				function createRenderModel(options, pxPerMil, marginPx) {
+					const text = getRenderableText(options.text);
+					const fontSizePx = Math.max(2, options.size * pxPerMil);
+					const paddingXPx = options.paddingX * pxPerMil;
+					const paddingYPx = options.paddingY * pxPerMil;
+					const fontFamily = options.font.replace(/"/g, '\\"');
+					const fontWeight = clampNumber(options.fontWeight, 400, 900, 700);
+
+					measureContext.font = `${fontWeight} ${fontSizePx}px "${fontFamily}"`;
+					const metrics = measureContext.measureText(text);
+					const textWidthPx = Math.max(1, metrics.width || 1);
+					const ascentPx = metrics.actualBoundingBoxAscent || fontSizePx * 0.78;
+					const descentPx = metrics.actualBoundingBoxDescent || fontSizePx * 0.22;
+					const textHeightPx = Math.max(1, ascentPx + descentPx);
+
+					const naturalInnerWidthPx = Math.max(1, textWidthPx + paddingXPx * 2);
+					const fixedWidthPx = options.width > 0 ? options.width * pxPerMil : 0;
+					const innerWidthPx = Math.max(1, fixedWidthPx > 0 ? Math.max(fixedWidthPx, naturalInnerWidthPx) : naturalInnerWidthPx);
+					const shapeHeightPx = Math.max(1, textHeightPx + paddingYPx * 2);
+					const capDepthPx = Math.max(1, shapeHeightPx / 2);
+					const shapeWidthPx = innerWidthPx + capDepthPx * 2;
+
+					const xLeftOut = marginPx;
+					const xLeftMid = marginPx + capDepthPx / 2;
+					const xLeftIn = marginPx + capDepthPx;
+					const xRightIn = xLeftIn + innerWidthPx;
+					const xRightMid = xRightIn + capDepthPx / 2;
+					const xRightOut = xRightIn + capDepthPx;
+					const yTop = marginPx;
+					const yBottom = marginPx + shapeHeightPx;
+					const yMid = marginPx + shapeHeightPx / 2;
+
+					let textX = xLeftIn + paddingXPx;
+					if (options.textAlign === 'center') {
+						textX = xLeftIn + (innerWidthPx - textWidthPx) / 2;
+					} else if (options.textAlign === 'right') {
+						textX = xRightIn - paddingXPx - textWidthPx;
+					}
+					const textY = yTop + paddingYPx + ascentPx;
+
+					return {
+						text,
+						fontFamily,
+						fontWeight,
+						fontSizePx,
+						textX,
+						textY,
+						pxPerMil,
+						shapeWidthPx,
+						shapeHeightPx,
+						widthMil: shapeWidthPx / pxPerMil,
+						heightMil: shapeHeightPx / pxPerMil,
+						canvasWidthPx: Math.ceil(shapeWidthPx + marginPx * 2),
+						canvasHeightPx: Math.ceil(shapeHeightPx + marginPx * 2),
+						bounds: {
+							xLeftOut,
+							xLeftMid,
+							xLeftIn,
+							xRightIn,
+							xRightMid,
+							xRightOut,
+							yTop,
+							yMid,
+							yBottom,
+						},
+						leftShape: options.leftShape,
+						rightShape: options.rightShape,
+					};
+				}
+
+				function drawRightCap(ctx, model) {
+					const b = model.bounds;
+					const radius = (b.yBottom - b.yTop) / 2;
+					switch (model.rightShape) {
+						case '|':
+						case ']':
+							ctx.moveTo(b.xRightOut, b.yTop);
+							ctx.lineTo(b.xRightOut, b.yBottom);
+							break;
+						case '/':
+							ctx.moveTo(b.xRightOut, b.yTop);
+							ctx.lineTo(b.xRightMid, b.yBottom);
+							break;
+						case '\\':
+							ctx.moveTo(b.xRightMid, b.yTop);
+							ctx.lineTo(b.xRightOut, b.yBottom);
+							break;
+						case '>':
+							ctx.moveTo(b.xRightMid, b.yTop);
+							ctx.lineTo(b.xRightOut, b.yMid);
+							ctx.lineTo(b.xRightMid, b.yBottom);
+							break;
+						case '<':
+							ctx.moveTo(b.xRightOut, b.yTop);
+							ctx.lineTo(b.xRightMid, b.yMid);
+							ctx.lineTo(b.xRightOut, b.yBottom);
+							break;
+						case '(':
+							ctx.moveTo(b.xRightOut, b.yTop);
+							ctx.arc(b.xRightOut, b.yMid, radius, -Math.PI / 2, Math.PI / 2, true);
+							break;
+						case ')':
+						default:
+							ctx.moveTo(b.xRightIn, b.yTop);
+							ctx.arc(b.xRightIn, b.yMid, radius, -Math.PI / 2, Math.PI / 2, false);
+							break;
+					}
+				}
+
+				function drawLeftCap(ctx, model) {
+					const b = model.bounds;
+					const radius = (b.yBottom - b.yTop) / 2;
+					switch (model.leftShape) {
+						case '|':
+						case '[':
+							ctx.lineTo(b.xLeftOut, b.yBottom);
+							ctx.lineTo(b.xLeftOut, b.yTop);
+							break;
+						case '/':
+							ctx.lineTo(b.xLeftOut, b.yBottom);
+							ctx.lineTo(b.xLeftMid, b.yTop);
+							break;
+						case '\\':
+							ctx.lineTo(b.xLeftMid, b.yBottom);
+							ctx.lineTo(b.xLeftOut, b.yTop);
+							break;
+						case '<':
+							ctx.lineTo(b.xLeftMid, b.yBottom);
+							ctx.lineTo(b.xLeftOut, b.yMid);
+							ctx.lineTo(b.xLeftMid, b.yTop);
+							break;
+						case '>':
+							ctx.lineTo(b.xLeftOut, b.yBottom);
+							ctx.lineTo(b.xLeftMid, b.yMid);
+							ctx.lineTo(b.xLeftOut, b.yTop);
+							break;
+						case ')':
+							ctx.lineTo(b.xLeftOut, b.yBottom);
+							ctx.arc(b.xLeftOut, b.yMid, radius, Math.PI / 2, -Math.PI / 2, true);
+							break;
+						case '(':
+						default:
+							ctx.lineTo(b.xLeftIn, b.yBottom);
+							ctx.arc(b.xLeftIn, b.yMid, radius, Math.PI / 2, -Math.PI / 2, false);
+							break;
+					}
+				}
+
+				function drawLabel(ctx, model, whiteBackground) {
+					ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+					if (whiteBackground) {
+						ctx.fillStyle = '#ffffff';
+						ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+					}
+
+					ctx.beginPath();
+					drawRightCap(ctx, model);
+					drawLeftCap(ctx, model);
+					ctx.closePath();
+					ctx.fillStyle = '#000000';
+					ctx.fill();
+
+					ctx.fillStyle = '#ffffff';
+					ctx.font = `${model.fontWeight} ${model.fontSizePx}px "${model.fontFamily}"`;
+					ctx.textBaseline = 'alphabetic';
+					ctx.fillText(model.text, model.textX, model.textY);
+				}
+
+				function renderPreview() {
+					const options = getFormOptions();
+					const roughModel = createRenderModel(options, 1, 0);
+
+					const safeWidth = Math.max(1, roughModel.widthMil);
+					const safeHeight = Math.max(1, roughModel.heightMil);
+					const scaleX = (elements.previewCanvas.width - 30) / safeWidth;
+					const scaleY = (elements.previewCanvas.height - 30) / safeHeight;
+					const previewScale = Math.max(0.1, Math.min(scaleX, scaleY));
+					const model = createRenderModel(options, previewScale, 6);
+
+					previewBufferCanvas.width = model.canvasWidthPx;
+					previewBufferCanvas.height = model.canvasHeightPx;
+					drawLabel(previewBufferContext, model, false);
+
+					previewContext.clearRect(0, 0, elements.previewCanvas.width, elements.previewCanvas.height);
+					const offsetX = Math.floor((elements.previewCanvas.width - model.canvasWidthPx) / 2);
+					const offsetY = Math.floor((elements.previewCanvas.height - model.canvasHeightPx) / 2);
+					previewContext.drawImage(previewBufferCanvas, offsetX, offsetY);
+					elements.previewMeta.textContent = `Label size: ${roughModel.widthMil.toFixed(1)} x ${roughModel.heightMil.toFixed(1)} mil`;
+				}
+
+				function requestRenderPreview() {
+					if (previewFrameHandle !== null) {
+						cancelAnimationFrame(previewFrameHandle);
+					}
+					previewFrameHandle = requestAnimationFrame(() => {
+						previewFrameHandle = null;
+						renderPreview();
+					});
+				}
+
+				async function saveCurrentOptions() {
+					try {
+						if (window.eda?.sys_Storage?.setExtensionUserConfig) {
+							await eda.sys_Storage.setExtensionUserConfig(STORAGE_OPTIONS_KEY, getFormOptions());
+						}
+					} catch (error) {
+						console.warn('saveCurrentOptions failed', error);
+					}
+				}
+
+				function getSortedPresetNames() {
+					return Object.keys(presetMap).sort((a, b) => {
+						if (a === 'Default') return -1;
+						if (b === 'Default') return 1;
+						return a.localeCompare(b);
+					});
+				}
+
+				function refreshPresetSelect(selectedName) {
+					const names = getSortedPresetNames();
+					elements.presetSelect.innerHTML = names
+						.map((name) => `<option value="${name}">${name}</option>`)
+						.join('');
+
+					const fallback = names.includes(selectedName) ? selectedName : 'Default';
+					elements.presetSelect.value = fallback;
+					elements.updatePresetBtn.disabled = fallback === 'Default';
+					elements.deletePresetBtn.disabled = fallback === 'Default';
+				}
+
+				async function persistPresetMap() {
+					const customPresets = {};
+					for (const [name, options] of Object.entries(presetMap)) {
+						if (name !== 'Default') {
+							customPresets[name] = options;
+						}
+					}
+					try {
+						if (window.eda?.sys_Storage?.setExtensionUserConfig) {
+							await eda.sys_Storage.setExtensionUserConfig(STORAGE_PRESETS_KEY, customPresets);
+						}
+					} catch (error) {
+						console.warn('persistPresetMap failed', error);
+					}
+				}
+
+				async function loadSettings() {
+					let loadedOptions = null;
+					let loadedPresets = null;
+
+					try {
+						if (window.eda?.sys_Storage?.getExtensionUserConfig) {
+							loadedOptions = eda.sys_Storage.getExtensionUserConfig(STORAGE_OPTIONS_KEY);
+							loadedPresets = eda.sys_Storage.getExtensionUserConfig(STORAGE_PRESETS_KEY);
+						}
+					} catch (error) {
+						console.warn('loadSettings failed', error);
+					}
+
+					presetMap = { Default: { ...DEFAULT_OPTIONS } };
+					if (loadedPresets && typeof loadedPresets === 'object') {
+						for (const [name, value] of Object.entries(loadedPresets)) {
+							if (typeof name === 'string' && name.trim() && name !== 'Default') {
+								presetMap[name] = sanitizeOptions(value);
+							}
+						}
+					}
+
+					const options = sanitizeOptions(loadedOptions);
+					ensureFontInList(options.font);
+					refreshFontSelect(options.font);
+					setFormOptions(options);
+					refreshPresetSelect('Default');
+				}
+
+				async function saveAsPreset() {
+					const nameRaw = window.prompt('Preset name:');
+					if (!nameRaw) {
+						return;
+					}
+					const name = nameRaw.trim();
+					if (!name) {
+						setStatus('Preset name cannot be empty.', true);
+						return;
+					}
+
+					presetMap[name] = getFormOptions();
+					refreshPresetSelect(name);
+					await persistPresetMap();
+					setStatus(`Preset "${name}" saved.`);
+				}
+
+				async function updatePreset() {
+					const selected = elements.presetSelect.value;
+					if (!selected || selected === 'Default') {
+						setStatus('Default preset cannot be overwritten.', true);
+						return;
+					}
+					presetMap[selected] = getFormOptions();
+					await persistPresetMap();
+					setStatus(`Preset "${selected}" updated.`);
+				}
+
+				async function deletePreset() {
+					const selected = elements.presetSelect.value;
+					if (!selected || selected === 'Default') {
+						setStatus('Default preset cannot be deleted.', true);
+						return;
+					}
+					const ok = window.confirm(`Delete preset "${selected}"?`);
+					if (!ok) {
+						return;
+					}
+
+					delete presetMap[selected];
+					refreshPresetSelect('Default');
+					await persistPresetMap();
+					setStatus(`Preset "${selected}" removed.`);
+				}
+
+				function applySelectedPreset() {
+					const name = elements.presetSelect.value;
+					const preset = presetMap[name];
+					if (!preset) {
+						return;
+					}
+					setFormOptions(sanitizeOptions(preset));
+					requestRenderPreview();
+					void saveCurrentOptions();
+					elements.updatePresetBtn.disabled = name === 'Default';
+					elements.deletePresetBtn.disabled = name === 'Default';
+					setStatus(`Preset "${name}" loaded.`);
+				}
+
+				function handleOptionChanged() {
+					const options = getFormOptions();
+					ensureFontInList(options.font);
+					refreshFontSelect(options.font);
+					setFormOptions(options);
+					requestRenderPreview();
+					void saveCurrentOptions();
+				}
+
+				function normalizePolygonArray(rawPolygon) {
+					const normalized = [];
+					for (const token of rawPolygon) {
+						if (token === 'L') {
+							normalized.push('L');
+						} else if (typeof token === 'number' && Number.isFinite(token)) {
+							normalized.push(token);
+						}
+					}
+					return normalized;
+				}
+
+				function canvasToBlob(canvas) {
+					return new Promise((resolve, reject) => {
+						canvas.toBlob((blob) => {
+							if (blob) {
+								resolve(blob);
+							} else {
+								reject(new Error('Failed to convert canvas to blob.'));
+							}
+						}, 'image/png');
+					});
+				}
+
+				function binarizeCanvas(context, threshold = 150) {
+					const { width, height } = context.canvas;
+					const imageData = context.getImageData(0, 0, width, height);
+					const data = imageData.data;
+					for (let i = 0; i < data.length; i += 4) {
+						const luminance = (data[i] + data[i + 1] + data[i + 2]) / 3;
+						const value = luminance >= threshold ? 255 : 0;
+						data[i] = value;
+						data[i + 1] = value;
+						data[i + 2] = value;
+						data[i + 3] = 255;
+					}
+					context.putImageData(imageData, 0, 0);
+				}
+
+				function polygonAreaMil2(polygon) {
+					const points = [];
+					let x = null;
+					for (const token of polygon) {
+						if (token === 'L') {
+							continue;
+						}
+						if (typeof token !== 'number') {
+							continue;
+						}
+						if (x === null) {
+							x = token;
+							continue;
+						}
+						points.push([x, token]);
+						x = null;
+					}
+					if (points.length < 3) {
+						return 0;
+					}
+					let sum = 0;
+					for (let i = 0; i < points.length; i += 1) {
+						const [x1, y1] = points[i];
+						const [x2, y2] = points[(i + 1) % points.length];
+						sum += x1 * y2 - x2 * y1;
+					}
+					return Math.abs(sum / 2);
+				}
+
+				function extractPolygonSource(polygonData) {
+					if (!polygonData) {
+						return [];
+					}
+					if (Array.isArray(polygonData.complexPolygon)) {
+						return polygonData.complexPolygon;
+					}
+					if (typeof polygonData.getSourceStrictComplex === 'function') {
+						const source = polygonData.getSourceStrictComplex();
+						if (Array.isArray(source)) {
+							return source;
+						}
+					}
+					if (typeof polygonData.getSource === 'function') {
+						const source = polygonData.getSource();
+						if (Array.isArray(source)) {
+							if (source.length && Array.isArray(source[0])) {
+								return source;
+							}
+							return [source];
+						}
+					}
+					return [];
+				}
+
+				async function buildLabelImageData(options) {
+					const qualityProfile = QUALITY_PROFILES[options.quality] || QUALITY_PROFILES.ultra;
+					const model = createRenderModel(options, qualityProfile.rasterScale, 0);
+					if (model.widthMil > 10000 || model.heightMil > 5000) {
+						throw new Error('Label is too large. Reduce size or width.');
+					}
+					const canvas = document.createElement('canvas');
+					canvas.width = model.canvasWidthPx;
+					canvas.height = model.canvasHeightPx;
+					const context = canvas.getContext('2d');
+
+					drawLabel(context, model, true);
+					if (qualityProfile.binarize) {
+						binarizeCanvas(context);
+					}
+					const imageBlob = await canvasToBlob(canvas);
+					const polygonData = await eda.pcb_MathPolygon.convertImageToComplexPolygon(
+						imageBlob,
+						model.widthMil,
+						model.heightMil,
+						qualityProfile.tolerance,
+						qualityProfile.simplification,
+						qualityProfile.smoothing,
+						qualityProfile.despeckling,
+						true,
+						false,
+					);
+
+					const polygonSource = extractPolygonSource(polygonData);
+					if (!polygonSource.length) {
+						throw new Error('Label contour generation failed.');
+					}
+
+					const polygons = polygonSource
+						.map(normalizePolygonArray)
+						.filter((polygon) => polygon.length >= 6)
+						.filter((polygon) => polygonAreaMil2(polygon) >= MIN_POLYGON_AREA_MIL2);
+					if (!polygons.length) {
+						throw new Error('No valid polygon was generated.');
+					}
+					const maxContours = options.quality === 'ultra' ? 900 : options.quality === 'balanced' ? 500 : 280;
+					if (polygons.length > maxContours) {
+						throw new Error('Generated too many contours. Try lower quality or reduce label detail.');
+					}
+
+					// PrimitiveImage works best with the native object returned by convertImageToComplexPolygon.
+					// Keep width/height from the render model for placement geometry.
+					return {
+						complexPolygon: polygonData,
+						width: model.widthMil,
+						height: model.heightMil,
+					};
+				}
+
+				function toTopLeft(position, width, height) {
+					return {
+						x: position.x - width / 2,
+						y: position.y + height / 2,
+					};
+				}
+
+				async function updateFloatingPlacementPosition() {
+					if (!floatingPlacement) {
+						return;
+					}
+					try {
+						const pointer = await eda.pcb_SelectControl.getCurrentMousePosition();
+						if (!pointer || !Number.isFinite(pointer.x) || !Number.isFinite(pointer.y)) {
+							return;
+						}
+						const topLeft = toTopLeft(pointer, floatingPlacement.width, floatingPlacement.height);
+						await eda.pcb_PrimitiveImage.modify(floatingPlacement.primitiveId, {
+							x: topLeft.x,
+							y: topLeft.y,
+						});
+					} catch (error) {
+						console.error('floating placement update failed', error);
+					}
+				}
+
+				async function stopFloatingPlacement(showWindow) {
+					if (floatingPlacement?.timer) {
+						clearInterval(floatingPlacement.timer);
+					}
+					if (typeof floatingPlacement?.removeEscListener === 'function') {
+						try {
+							floatingPlacement.removeEscListener();
+						} catch (error) {
+							console.warn('remove esc listener failed', error);
+						}
+					}
+					eda.pcb_Event.removeEventListener(FLOAT_PLACE_EVENT_ID);
+					floatingPlacement = null;
+					if (showWindow) {
+						await eda.sys_IFrame.showIFrame(IFRAME_ID);
+						elements.labelText.focus();
+						elements.labelText.select();
+					}
+				}
+
+				async function cancelFloatingPlacementByEsc() {
+					if (!floatingPlacement) {
+						return;
+					}
+					try {
+						await eda.pcb_PrimitiveImage.delete(floatingPlacement.primitiveId);
+					} catch (error) {
+						console.warn('delete floating primitive failed', error);
+					}
+					await stopFloatingPlacement(true);
+					setStatus('Placement canceled. You can edit settings and place again.');
+					if (eda.sys_Message?.showToastMessage) {
+						eda.sys_Message.showToastMessage('Placement canceled.', 'info', 2);
+					}
+				}
+
+				function attachFloatingEscListener() {
+					const escHandler = (event) => {
+						if (!floatingPlacement) {
+							return;
+						}
+						const isEscape = event.key === 'Escape' || event.code === 'Escape' || event.keyCode === 27;
+						if (!isEscape) {
+							return;
+						}
+						event.preventDefault();
+						event.stopPropagation();
+						void cancelFloatingPlacementByEsc();
+					};
+					const targets = [];
+					const register = (target) => {
+						if (!target || typeof target.addEventListener !== 'function') {
+							return;
+						}
+						try {
+							target.addEventListener('keydown', escHandler, true);
+							targets.push(target);
+						} catch (error) {
+							console.warn('register esc listener failed', error);
+						}
+					};
+					register(window);
+					register(document);
+					try {
+						if (window.top && window.top !== window) {
+							register(window.top);
+							if (window.top.document) {
+								register(window.top.document);
+							}
+						}
+					} catch (error) {
+						console.debug('top window esc listener unavailable', error);
+					}
+					return () => {
+						for (const target of targets) {
+							try {
+								target.removeEventListener('keydown', escHandler, true);
+							} catch (error) {
+								console.warn('unregister esc listener failed', error);
+							}
+						}
+					};
+				}
+
+				async function startFloatingPlacement(primitiveId, width, height) {
+					const timer = setInterval(() => {
+						void updateFloatingPlacementPosition();
+					}, 28);
+					const removeEscListener = attachFloatingEscListener();
+					floatingPlacement = { primitiveId, width, height, timer, removeEscListener };
+					eda.pcb_Event.addMouseEventListener(
+						FLOAT_PLACE_EVENT_ID,
+						'selected',
+						async () => {
+							await stopFloatingPlacement(true);
+							setStatus('Label placed successfully.');
+							if (eda.sys_Message?.showToastMessage) {
+								eda.sys_Message.showToastMessage('Label placed.', 'success', 2);
+							}
+						},
+						true,
+					);
+				}
+
+				async function placeLabel() {
+					if (placing) {
+						return;
+					}
+					if (!window.eda?.pcb_MathPolygon || !window.eda?.pcb_PrimitiveImage || !window.eda?.pcb_SelectControl) {
+						setStatus('PCB API is not available in this editor context.', true);
+						return;
+					}
+					if (floatingPlacement) {
+						setStatus('Finish current floating placement with one click on PCB.', true);
+						return;
+					}
+
+					placing = true;
+					elements.placeBtn.disabled = true;
+					setStatus('Generating label...');
+
+					try {
+						await new Promise((resolve) => {
+							setTimeout(resolve, 16);
+						});
+						const options = getFormOptions();
+						const imageData = await buildLabelImageData(options);
+
+						const pointer = await eda.pcb_SelectControl.getCurrentMousePosition();
+						if (!pointer || !Number.isFinite(pointer.x) || !Number.isFinite(pointer.y)) {
+							throw new Error('Cannot read current mouse position.');
+						}
+
+						await eda.pcb_Layer.selectLayer(options.layer);
+						const topLeft = toTopLeft(pointer, imageData.width, imageData.height);
+						const created = await eda.pcb_PrimitiveImage.create(
+							topLeft.x,
+							topLeft.y,
+							imageData.complexPolygon,
+							options.layer,
+							imageData.width,
+							imageData.height,
+							0,
+							options.mirror,
+							false,
+						);
+						if (!created) {
+							throw new Error('Image primitive creation failed.');
+						}
+
+						void saveCurrentOptions();
+						await startFloatingPlacement(created.getState_PrimitiveId(), imageData.width, imageData.height);
+						await eda.sys_IFrame.hideIFrame(IFRAME_ID);
+						setStatus('Move cursor on PCB and click once to place. Press Esc to cancel.');
+						if (eda.sys_Message?.showToastMessage) {
+							eda.sys_Message.showToastMessage('Move cursor and click once to place label. Press Esc to cancel.', 'info', 3);
+						}
+					} catch (error) {
+						console.error(error);
+						setStatus(`Place failed: ${error.message || error}`, true);
+						if (eda.sys_Message?.showToastMessage) {
+							eda.sys_Message.showToastMessage(`Place failed: ${error.message || error}`, 'error', 4);
+						}
+					} finally {
+						placing = false;
+						elements.placeBtn.disabled = false;
+					}
+				}
+
+				function closeWindow() {
+					if (window.eda?.sys_IFrame?.closeIFrame) {
+						void eda.sys_IFrame.closeIFrame(IFRAME_ID);
+					} else {
+						window.close();
+					}
+				}
+
+				function bindEvents() {
+					const optionControls = [
+						elements.leftShape,
+						elements.rightShape,
+						elements.labelText,
+						elements.fontFamily,
+						elements.fontWeight,
+						elements.layer,
+						elements.quality,
+						elements.fontSize,
+						elements.paddingX,
+						elements.paddingY,
+						elements.labelWidth,
+						elements.textAlign,
+						elements.mirror,
+					];
+
+					for (const control of optionControls) {
+						control.addEventListener('change', handleOptionChanged);
+						control.addEventListener('input', handleOptionChanged);
+					}
+
+					elements.labelText.addEventListener('keydown', (event) => {
+						if (event.key === 'Enter') {
+							event.preventDefault();
+							void placeLabel();
+						}
+					});
+
+					elements.presetSelect.addEventListener('change', applySelectedPreset);
+					elements.savePresetBtn.addEventListener('click', () => {
+						void saveAsPreset();
+					});
+					elements.updatePresetBtn.addEventListener('click', () => {
+						void updatePreset();
+					});
+					elements.deletePresetBtn.addEventListener('click', () => {
+						void deletePreset();
+					});
+					elements.addFontBtn.addEventListener('click', () => {
+						void addFontByName();
+					});
+					elements.importFontBtn.addEventListener('click', () => {
+						void importFontFromFile();
+					});
+					elements.placeBtn.addEventListener('click', () => {
+						void placeLabel();
+					});
+					elements.closeBtn.addEventListener('click', closeWindow);
+				}
+
+				async function bootstrap() {
+					populateShapeSelects();
+					bindEvents();
+					await loadFonts();
+					await loadSettings();
+					renderPreview();
+					elements.labelText.focus();
+					elements.labelText.select();
+				}
+
+				void bootstrap();
+			})();
+		</script>
+	</body>
+</html>
