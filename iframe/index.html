@@ -370,7 +370,7 @@
 					paddingX: 10,
 					paddingY: 6,
 					width: 0,
-					textAlign: 'left',
+					textAlign: 'center',
 					layer: 3,
 					mirror: false,
 					quality: 'ultra',
@@ -413,6 +413,7 @@
 				let presetMap = { Default: { ...DEFAULT_OPTIONS } };
 				let fontsList = ['Arial'];
 				const runtimeFontFaces = new Map();
+				const fontMetricCache = new Map();
 				let previewFrameHandle = null;
 				let floatingPlacement = null;
 				const FLOAT_PLACE_EVENT_ID = 'labelmaker-pro-float-place-click';
@@ -550,6 +551,7 @@
 					}
 					fontsList = Array.from(new Set(fontsList.filter(Boolean)));
 					fontsList.sort((a, b) => a.localeCompare(b));
+					fontMetricCache.clear();
 				}
 
 				async function addFontByName() {
@@ -618,6 +620,22 @@
 					return text.length ? text : '?';
 				}
 
+				function measureStableFontMetrics(fontSpec, fontSizePx) {
+					const cacheKey = `${fontSpec}::${fontSizePx.toFixed(3)}`;
+					const cached = fontMetricCache.get(cacheKey);
+					if (cached) {
+						return cached;
+					}
+
+					measureContext.font = fontSpec;
+					const reference = measureContext.measureText('HgQy');
+					const ascentPx = Math.max(1, reference.fontBoundingBoxAscent || reference.actualBoundingBoxAscent || fontSizePx * 0.8);
+					const descentPx = Math.max(1, reference.fontBoundingBoxDescent || reference.actualBoundingBoxDescent || fontSizePx * 0.22);
+					const stable = { ascentPx, descentPx };
+					fontMetricCache.set(cacheKey, stable);
+					return stable;
+				}
+
 				function createRenderModel(options, pxPerMil, marginPx) {
 					const text = getRenderableText(options.text);
 					const fontSizePx = Math.max(2, options.size * pxPerMil);
@@ -626,11 +644,11 @@
 					const fontFamily = options.font.replace(/"/g, '\\"');
 					const fontWeight = clampNumber(options.fontWeight, 400, 900, 700);
 
-					measureContext.font = `${fontWeight} ${fontSizePx}px "${fontFamily}"`;
+					const fontSpec = `${fontWeight} ${fontSizePx}px "${fontFamily}"`;
+					measureContext.font = fontSpec;
 					const metrics = measureContext.measureText(text);
 					const textWidthPx = Math.max(1, metrics.width || 1);
-					const ascentPx = metrics.actualBoundingBoxAscent || fontSizePx * 0.78;
-					const descentPx = metrics.actualBoundingBoxDescent || fontSizePx * 0.22;
+					const { ascentPx, descentPx } = measureStableFontMetrics(fontSpec, fontSizePx);
 					const textHeightPx = Math.max(1, ascentPx + descentPx);
 
 					const naturalInnerWidthPx = Math.max(1, textWidthPx + paddingXPx * 2);
@@ -650,13 +668,16 @@
 					const yBottom = marginPx + shapeHeightPx;
 					const yMid = marginPx + shapeHeightPx / 2;
 
-					let textX = xLeftIn + paddingXPx;
-					if (options.textAlign === 'center') {
-						textX = xLeftIn + (innerWidthPx - textWidthPx) / 2;
+					let textX = xLeftIn + innerWidthPx / 2;
+					let textCanvasAlign = 'center';
+					if (options.textAlign === 'left') {
+						textX = xLeftIn + paddingXPx;
+						textCanvasAlign = 'left';
 					} else if (options.textAlign === 'right') {
-						textX = xRightIn - paddingXPx - textWidthPx;
+						textX = xRightIn - paddingXPx;
+						textCanvasAlign = 'right';
 					}
-					const textY = yTop + paddingYPx + ascentPx;
+					const textY = yMid + (ascentPx - descentPx) / 2;
 
 					return {
 						text,
@@ -665,6 +686,7 @@
 						fontSizePx,
 						textX,
 						textY,
+						textCanvasAlign,
 						pxPerMil,
 						shapeWidthPx,
 						shapeHeightPx,
@@ -782,6 +804,7 @@
 
 					ctx.fillStyle = '#ffffff';
 					ctx.font = `${model.fontWeight} ${model.fontSizePx}px "${model.fontFamily}"`;
+					ctx.textAlign = model.textCanvasAlign;
 					ctx.textBaseline = 'alphabetic';
 					ctx.fillText(model.text, model.textX, model.textY);
 				}
