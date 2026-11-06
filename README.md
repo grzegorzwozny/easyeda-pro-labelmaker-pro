@@ -1,49 +1,36 @@
 # Label Maker Pro for EasyEDA Pro
 
-EasyEDA Pro extension for creating shaped silkscreen labels with text cutout.
+Create top and bottom PCB silkscreen labels with cutout text, shaped ends, and a live preview. The dialog follows the EasyEDA Pro light or dark theme.
 
-![Label Maker Pro Screenshot](docs/image.png)
-![Label Maker Pro Demo](docs/demo.gif)
+## Install or update in EasyEDA Pro 3.x
 
-## Features
+1. Download the `.eext` file from [GitHub Releases](https://github.com/grzegorzwozny/easyeda-pro-labelmaker-pro/releases) or build it locally.
+2. In EasyEDA Pro, open **Advanced → Extension Manager → Import** and select the `.eext` file.
+3. For an update from v1.0.0, import the new file over the existing installation. Check the active version and enable **Label Maker Pro** under **Installed**.
+4. Open a PCB and choose **Label Maker → Open Label Maker…**. If **Show in top menu** is off, look under **Advanced**.
 
-- Shaped labels with left/right caps: `(` `)` `<` `>` `/` `\` `|` `[` `]`
-- Live preview before placement
-- Ultra/Balanced/Fast quality profiles
-- Font family + font weight control
-- `Place Label` floating placement mode
-- `Esc` to cancel placement and return to settings
-- Presets (save/update/delete)
-- Top/Bottom silkscreen support with mirror option
-- Dimensions in `mil`
+The update uses the same extension UUID and preset storage keys. Existing settings and presets load with zero radii.
 
-## Install In EasyEDA Pro
+## Create a label
 
-1. Open EasyEDA Pro.
-2. Open Extension Manager.
-3. Install from local file:
-   - `build/dist/eext-labelmaker-pro_v1.0.0.eext`
-   - or `build/dist/eext-labelmaker-pro_v1.0.0.zip`
-4. In PCB editor open: `Label Maker -> Open Label Maker...`
+1. Set the text, font, weight, padding, and left and right end shapes. Dimensions use mil. **Width** sets a minimum width for the straight central section. Set it to **0** for automatic sizing.
+2. Choose a flat end (`|`, `[`, or `]`) and expand **Corner radii (mil)**. Set each available corner independently. Zero leaves it square. Radii above half the label height are limited automatically and the preview shows the result.
+3. Choose a silkscreen layer and a quality profile. **Bottom Mirror** horizontally flips the whole label on the bottom layer, including its corners. The live preview shows that orientation as viewed from the top of the PCB.
+4. Click **Place Label**, move the label to the desired point on the PCB, and click to place it. Press **Esc** to cancel and return to the settings.
 
-## How To Use
+Use **Save As**, **Update**, and **Delete** to manage custom presets. **Load Font File** loads a local font for the current window session.
 
-1. Set text, shape, font, size, padding, width and alignment.
-2. Click `Place Label`.
-3. Label Maker window hides and label follows your cursor.
-4. Click once on PCB to place label.
-5. Press `Esc` to cancel placement and return to the settings window.
+## Build from source
 
-## Build From Source
+With Node.js 20.17 or later:
 
-```bash
-npm install
+```sh
+npm ci
 npm run build
 ```
 
-Generated packages:
+The build creates `build/dist/eext-labelmaker-pro_v1.1.0.eext`.
 
-- `build/dist/eext-labelmaker-pro_v1.0.0.eext`
-- `build/dist/eext-labelmaker-pro_v1.0.0.zip`
+## Extension Marketplace
 
-
+Maintainers can submit the `.eext` package through [Extension Management](https://jlcext.com/) for review. For a first listing, confirm the publishing UUID with the Marketplace before changing the existing extension identity. See the [official publishing guide](https://prodocs.easyeda.com/en/api/guide/extensions-marketplace.html).

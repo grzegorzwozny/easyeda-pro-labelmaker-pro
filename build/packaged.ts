@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import fs from 'fs-extra';
 import ignore from 'ignore';
 import JSZip from 'jszip';
@@ -50,7 +51,7 @@ function fixUuid(uuid?: string): string {
 /**
  * 主逻辑方法
  */
-function main() {
+async function main() {
 	if (!testUuid(extensionConfig.uuid)) {
 		const newExtensionConfig = { ...extensionConfig };
 		// @ts-expect-error - Removing default property from extension config
@@ -72,13 +73,9 @@ function main() {
 	const edaignore = ignore().add(edaignoreList);
 	const filepathListWithoutResolve = edaignore.filter(filepathListWithoutFilter);
 	const fileList: Array<string> = [];
-	const folderList: Array<string> = []; // 无用数据
 	for (const filepath of filepathListWithoutResolve) {
-		if (fs.lstatSync(filepath).isFile()) {
+		if (fs.lstatSync(path.join(__dirname, '../', filepath)).isFile()) {
 			fileList.push(filepath.replace(/\\/g, '/'));
-		}
-		else {
-			folderList.push(filepath.replace(/\\/g, '/'));
 		}
 	}
 
@@ -87,9 +84,15 @@ function main() {
 		zip.file(file, fs.createReadStream(path.join(__dirname, '../', file)));
 	}
 
-	zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true, compression: 'DEFLATE', compressionOptions: { level: 9 } }).pipe(
-		fs.createWriteStream(path.join(__dirname, 'dist', `${extensionConfig.name}_v${extensionConfig.version}.eext`)),
+	const outputDir = path.join(__dirname, 'dist');
+	fs.ensureDirSync(outputDir);
+	await pipeline(
+		zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true, compression: 'DEFLATE', compressionOptions: { level: 9 } }),
+		fs.createWriteStream(path.join(outputDir, `${extensionConfig.name}_v${extensionConfig.version}.eext`)),
 	);
 }
 
-main();
+main().catch((error: unknown) => {
+	console.error(error);
+	process.exitCode = 1;
+});

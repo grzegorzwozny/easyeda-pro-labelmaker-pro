@@ -10,6 +10,7 @@
 /old_easy_eda_example/
 /_upstream/
 /.editorconfig
+/.edaignore
 /.gitattributes
 /.gitignore
 /.npmrc

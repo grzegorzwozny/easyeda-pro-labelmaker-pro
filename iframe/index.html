@@ -6,14 +6,51 @@
 		<title>Label Maker Pro</title>
 		<style>
 			:root {
-				--bg: #f4f7fb;
+				color-scheme: light;
+				--bg: #f3f6fa;
 				--panel: #ffffff;
-				--line: #d7e0eb;
-				--text: #203040;
-				--text-soft: #5b6f83;
-				--primary: #0f74d9;
-				--primary-hover: #0b5fb3;
-				--danger: #cc3d3d;
+				--field: #ffffff;
+				--line: #ccd7e4;
+				--text: #192b3c;
+				--text-soft: #465e74;
+				--button: #e8eef5;
+				--button-hover: #dce7f3;
+				--primary: #086ac8;
+				--primary-hover: #0556a5;
+				--focus: #126fc4;
+				--danger-bg: #ffebeb;
+				--danger: #a02727;
+				--danger-line: #e5bcbc;
+				--status-bg: #edf5ff;
+				--status-text: #1f4f84;
+				--status-line: #c4daf2;
+				--preview-bg: #f9fbff;
+				--grid: #e9eff7;
+				--silk: #172c42;
+			}
+
+			:root[data-theme="dark"] {
+				color-scheme: dark;
+				--bg: #282a2d;
+				--panel: #34363a;
+				--field: #292b2f;
+				--line: #565b63;
+				--text: #f2f3f5;
+				--text-soft: #c0c5cd;
+				--button: #454951;
+				--button-hover: #525965;
+				--primary: #1769b4;
+				--primary-hover: #155d9f;
+				--focus: #7ebeff;
+				--danger-bg: #4a2c30;
+				--danger: #ffc0c1;
+				--danger-line: #89545a;
+				--status-bg: #26394d;
+				--status-text: #c6e2ff;
+				--status-line: #476380;
+				--preview-bg: #222428;
+				--grid: #303339;
+				--silk: #e5ecf5;
 			}
 
 			* {
@@ -72,7 +109,7 @@
 			}
 
 			.row.cols-3 {
-				grid-template-columns: 1fr 1fr 1fr;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
 			}
 
 			label {
@@ -94,7 +131,7 @@
 				padding: 7px 8px;
 				border: 1px solid var(--line);
 				border-radius: 7px;
-				background: #fff;
+				background: var(--field);
 				color: var(--text);
 			}
 
@@ -106,6 +143,7 @@
 
 			.hstack > * {
 				flex: 1;
+				min-width: 0;
 			}
 
 			.tools {
@@ -122,21 +160,23 @@
 			.preview-wrap {
 				border: 1px solid var(--line);
 				border-radius: 8px;
-				background: linear-gradient(180deg, #fefefe, #f7fbff);
+				background: var(--bg);
 				padding: 8px;
 				display: grid;
 				gap: 6px;
+				min-width: 0;
 			}
 
 			#previewCanvas {
+				display: block;
 				width: 100%;
-				height: 180px;
-				border: 1px solid #e4ebf3;
+				height: 152px;
+				border: 1px solid var(--line);
 				border-radius: 6px;
 				background:
-					linear-gradient(90deg, rgba(15, 116, 217, 0.04) 1px, transparent 1px) 0 0 / 20px 20px,
-					linear-gradient(0deg, rgba(15, 116, 217, 0.04) 1px, transparent 1px) 0 0 / 20px 20px,
-					#fbfdff;
+					linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 16px 16px,
+					linear-gradient(0deg, var(--grid) 1px, transparent 1px) 0 0 / 16px 16px,
+					var(--preview-bg);
 			}
 
 			.preview-meta {
@@ -155,8 +195,17 @@
 				border-radius: 8px;
 				padding: 8px 11px;
 				cursor: pointer;
-				background: #e7edf5;
-				color: #13293d;
+				background: var(--button);
+				color: var(--text);
+			}
+
+			button:not(:disabled):hover {
+				background: var(--button-hover);
+			}
+
+			:focus-visible {
+				outline: 2px solid var(--focus);
+				outline-offset: 2px;
 			}
 
 			button.primary {
@@ -165,12 +214,12 @@
 				font-weight: 600;
 			}
 
-			button.primary:hover {
+			button.primary:not(:disabled):hover {
 				background: var(--primary-hover);
 			}
 
 			button.danger {
-				background: #ffe9e9;
+				background: var(--danger-bg);
 				color: var(--danger);
 			}
 
@@ -183,15 +232,77 @@
 				border-radius: 8px;
 				padding: 8px 10px;
 				font-size: 12px;
-				background: #edf5ff;
-				color: #1f4f84;
-				border: 1px solid #cddff5;
+				background: var(--status-bg);
+				color: var(--status-text);
+				border: 1px solid var(--status-line);
 			}
 
 			.status.error {
-				background: #fff1f1;
-				color: #8a2f2f;
-				border-color: #f0c5c5;
+				background: var(--danger-bg);
+				color: var(--danger);
+				border-color: var(--danger-line);
+			}
+
+			.corner-settings {
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				padding: 7px 9px;
+			}
+
+			.corner-settings summary {
+				cursor: pointer;
+				font-weight: 600;
+			}
+
+			.corner-grid {
+				display: flex;
+				gap: 8px;
+				margin-top: 8px;
+			}
+
+			.corner-side {
+				flex: 1;
+				min-width: 0;
+			}
+
+			.hint {
+				margin: 6px 0 0;
+				color: var(--text-soft);
+				font-size: 12px;
+			}
+
+			dialog {
+				width: min(340px, calc(100% - 24px));
+				padding: 16px;
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				background: var(--panel);
+				color: var(--text);
+			}
+
+			dialog::backdrop {
+				background: rgb(0 0 0 / 45%);
+			}
+
+			dialog .actions {
+				margin-top: 12px;
+				justify-content: flex-end;
+			}
+
+			[hidden] {
+				display: none !important;
+			}
+
+			@media (max-width: 420px) {
+				.hstack,
+				.corner-grid {
+					flex-direction: column;
+					align-items: stretch;
+				}
+
+				.row.cols-3 {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
 			}
 		</style>
 	</head>
@@ -233,6 +344,21 @@
 						<select id="rightShape"></select>
 					</label>
 				</div>
+
+				<details id="cornerSettings" class="corner-settings" hidden>
+					<summary>Corner radii (mil)</summary>
+					<div class="corner-grid">
+						<div id="leftCorners" class="corner-side row cols-2">
+							<label>Top-left <input id="topLeft" type="number" min="0" step="any" inputmode="decimal" /></label>
+							<label>Bottom-left <input id="bottomLeft" type="number" min="0" step="any" inputmode="decimal" /></label>
+						</div>
+						<div id="rightCorners" class="corner-side row cols-2">
+							<label>Top-right <input id="topRight" type="number" min="0" step="any" inputmode="decimal" /></label>
+							<label>Bottom-right <input id="bottomRight" type="number" min="0" step="any" inputmode="decimal" /></label>
+						</div>
+					</div>
+					<p class="hint" id="cornerHint">0 keeps the corner square.</p>
+				</details>
 
 				<div class="row cols-3">
 					<label>
@@ -313,7 +439,7 @@
 				</div>
 
 				<div class="preview-wrap">
-					<canvas id="previewCanvas" width="540" height="180"></canvas>
+					<canvas id="previewCanvas" aria-label="Silkscreen label preview"></canvas>
 					<div class="preview-meta" id="previewMeta">Label size: -- x -- mil</div>
 				</div>
 
@@ -322,9 +448,22 @@
 					<button id="closeBtn" type="button">Close</button>
 				</div>
 
-				<div class="status" id="statusLine">Ready. Move your cursor on PCB and click "Place Label".</div>
+				<div class="status" id="statusLine" role="status">Ready. Click Place Label to start.</div>
 			</div>
 		</div>
+
+		<dialog id="actionDialog" aria-labelledby="actionMessage">
+			<form method="dialog">
+				<label>
+					<span id="actionMessage"></span>
+					<input id="actionValue" type="text" />
+				</label>
+				<div class="actions">
+					<button value="cancel">Cancel</button>
+					<button id="actionConfirm" value="confirm" class="primary">OK</button>
+				</div>
+			</form>
+		</dialog>
 
 		<script>
 			(() => {
@@ -332,6 +471,8 @@
 				const STORAGE_PRESETS_KEY = 'labelMaker.presets.v1';
 				const IFRAME_ID = 'label-maker-pro-window';
 				const MIN_POLYGON_AREA_MIL2 = 0.6;
+				const MAX_RASTER_SIDE = 8192;
+				const MAX_RASTER_PIXELS = 16_000_000;
 				const QUALITY_PROFILES = {
 					ultra: {
 						rasterScale: 12,
@@ -360,9 +501,14 @@
 				};
 
 				const SHAPES = ['(', ')', '<', '>', '/', '\\', '|', '[', ']'];
+				const CORNERS = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
 				const DEFAULT_OPTIONS = {
 					leftShape: '(',
 					rightShape: ')',
+					topLeft: 0,
+					topRight: 0,
+					bottomLeft: 0,
+					bottomRight: 0,
 					text: 'GND',
 					font: 'Arial',
 					fontWeight: 700,
@@ -383,6 +529,14 @@
 					deletePresetBtn: document.getElementById('deletePresetBtn'),
 					leftShape: document.getElementById('leftShape'),
 					rightShape: document.getElementById('rightShape'),
+					cornerSettings: document.getElementById('cornerSettings'),
+					leftCorners: document.getElementById('leftCorners'),
+					rightCorners: document.getElementById('rightCorners'),
+					cornerHint: document.getElementById('cornerHint'),
+					topLeft: document.getElementById('topLeft'),
+					topRight: document.getElementById('topRight'),
+					bottomLeft: document.getElementById('bottomLeft'),
+					bottomRight: document.getElementById('bottomRight'),
 					labelText: document.getElementById('labelText'),
 					fontFamily: document.getElementById('fontFamily'),
 					fontWeight: document.getElementById('fontWeight'),
@@ -401,27 +555,83 @@
 					placeBtn: document.getElementById('placeBtn'),
 					closeBtn: document.getElementById('closeBtn'),
 					statusLine: document.getElementById('statusLine'),
+					actionDialog: document.getElementById('actionDialog'),
+					actionMessage: document.getElementById('actionMessage'),
+					actionValue: document.getElementById('actionValue'),
+					actionConfirm: document.getElementById('actionConfirm'),
 				};
 
 				const previewContext = elements.previewCanvas.getContext('2d');
-				const previewBufferCanvas = document.createElement('canvas');
-				const previewBufferContext = previewBufferCanvas.getContext('2d');
 				const measureCanvas = document.createElement('canvas');
 				const measureContext = measureCanvas.getContext('2d');
+				const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
 
 				let placing = false;
-				let presetMap = { Default: { ...DEFAULT_OPTIONS } };
+				let presetMap = Object.assign(Object.create(null), { Default: DEFAULT_OPTIONS });
 				let fontsList = ['Arial'];
 				const runtimeFontFaces = new Map();
 				const fontMetricCache = new Map();
 				let previewFrameHandle = null;
 				let floatingPlacement = null;
+				let optionsWrite = Promise.resolve();
+				let savingPreset = false;
 				const FLOAT_PLACE_EVENT_ID = 'labelmaker-pro-float-place-click';
 				let systemFontsLoaded = false;
+				let syncingTheme = false;
 
 				function setStatus(message, isError = false) {
 					elements.statusLine.textContent = message;
 					elements.statusLine.classList.toggle('error', Boolean(isError));
+				}
+
+				async function syncTheme() {
+					if (syncingTheme) return;
+					syncingTheme = true;
+					let theme;
+					try {
+						theme = await window.eda?.sys_Window?.getCurrentTheme?.();
+					} catch {
+						// Follow the OS when the host cannot report its theme.
+					} finally {
+						syncingTheme = false;
+					}
+					const next = theme === 'dark' || theme === 'light' ? theme : (systemTheme.matches ? 'dark' : 'light');
+					if (document.documentElement.dataset.theme !== next) {
+						document.documentElement.dataset.theme = next;
+						requestRenderPreview();
+					}
+				}
+
+				function askUser(message, initialValue, confirmLabel = 'OK') {
+					const { actionDialog, actionMessage, actionValue, actionConfirm } = elements;
+					actionMessage.textContent = message;
+					actionValue.hidden = initialValue === undefined;
+					actionValue.value = initialValue ?? '';
+					actionConfirm.textContent = confirmLabel;
+					actionDialog.returnValue = '';
+					return new Promise((resolve) => {
+						actionDialog.addEventListener('close', () => {
+							resolve(actionDialog.returnValue === 'confirm' ? actionValue.value : null);
+						}, { once: true });
+						actionDialog.showModal();
+						if (!actionValue.hidden) {
+							actionValue.focus();
+							actionValue.select();
+						}
+					});
+				}
+
+				function isSquareCap(shape) {
+					return shape === '|' || shape === '[' || shape === ']';
+				}
+
+				function updateControlAvailability(options) {
+					const left = isSquareCap(options.leftShape);
+					const right = isSquareCap(options.rightShape);
+					elements.cornerSettings.hidden = !left && !right;
+					elements.leftCorners.hidden = !left;
+					elements.rightCorners.hidden = !right;
+					elements.mirror.disabled = options.layer !== 4;
 				}
 
 				function clampNumber(value, minimum, maximum, fallback) {
@@ -440,16 +650,20 @@
 
 					if (SHAPES.includes(raw.leftShape)) next.leftShape = raw.leftShape;
 					if (SHAPES.includes(raw.rightShape)) next.rightShape = raw.rightShape;
+					for (const corner of CORNERS) {
+						next[corner] = clampNumber(raw[corner], 0, 20000, 0);
+					}
 					next.text = typeof raw.text === 'string' ? raw.text.slice(0, 80) : next.text;
 					next.font = typeof raw.font === 'string' && raw.font.length ? raw.font : next.font;
-					next.fontWeight = clampNumber(raw.fontWeight, 400, 900, next.fontWeight);
+					const weight = Number(raw.fontWeight);
+					if ([400, 500, 600, 700, 800].includes(weight)) next.fontWeight = weight;
 					next.size = clampNumber(raw.size, 2, 1000, next.size);
 					next.paddingX = clampNumber(raw.paddingX, -200, 1000, next.paddingX);
 					next.paddingY = clampNumber(raw.paddingY, -200, 1000, next.paddingY);
 					next.width = clampNumber(raw.width, 0, 20000, next.width);
 					next.textAlign = ['left', 'center', 'right'].includes(raw.textAlign) ? raw.textAlign : next.textAlign;
 					next.layer = Number(raw.layer) === 4 ? 4 : 3;
-					next.mirror = Boolean(raw.mirror);
+					next.mirror = raw.mirror === true || raw.mirror === 'true';
 					next.quality = ['ultra', 'balanced', 'fast'].includes(raw.quality) ? raw.quality : next.quality;
 					return next;
 				}
@@ -458,6 +672,10 @@
 					return sanitizeOptions({
 						leftShape: elements.leftShape.value,
 						rightShape: elements.rightShape.value,
+						topLeft: elements.topLeft.value,
+						topRight: elements.topRight.value,
+						bottomLeft: elements.bottomLeft.value,
+						bottomRight: elements.bottomRight.value,
 						text: elements.labelText.value,
 						font: elements.fontFamily.value,
 						fontWeight: elements.fontWeight.value,
@@ -475,8 +693,11 @@
 				function setFormOptions(options) {
 					elements.leftShape.value = options.leftShape;
 					elements.rightShape.value = options.rightShape;
+					for (const corner of CORNERS) {
+						elements[corner].value = String(options[corner]);
+					}
 					elements.labelText.value = options.text;
-					elements.fontFamily.value = options.font;
+					refreshFontSelect(options.font);
 					elements.fontWeight.value = String(options.fontWeight);
 					elements.fontSize.value = String(options.size);
 					elements.paddingX.value = String(options.paddingX);
@@ -486,6 +707,7 @@
 					elements.layer.value = String(options.layer);
 					elements.mirror.value = String(options.mirror);
 					elements.quality.value = options.quality;
+					updateControlAvailability(options);
 				}
 
 				function populateShapeSelects() {
@@ -504,9 +726,7 @@
 
 				function refreshFontSelect(selectedFont) {
 					ensureFontInList(selectedFont);
-					elements.fontFamily.innerHTML = fontsList
-						.map((font) => `<option value="${font}">${font}</option>`)
-						.join('');
+					elements.fontFamily.replaceChildren(...fontsList.map((font) => new Option(font, font)));
 					elements.fontFamily.value = selectedFont;
 				}
 
@@ -555,8 +775,8 @@
 				}
 
 				async function addFontByName() {
-					const fontNameRaw = window.prompt('Enter system font name (exact):');
-					if (!fontNameRaw) {
+					const fontNameRaw = await askUser('Enter the exact system font name.', '');
+					if (fontNameRaw === null) {
 						return;
 					}
 					const fontName = fontNameRaw.trim();
@@ -574,6 +794,7 @@
 						await loadFonts();
 						refreshFontSelect(fontName);
 						handleOptionChanged();
+						saveCurrentOptions();
 						setStatus(`Font "${fontName}" added.`);
 					} catch (error) {
 						console.error(error);
@@ -591,8 +812,8 @@
 							return;
 						}
 						const fallbackName = (file.name || 'CustomFont').replace(/\.[^.]+$/, '');
-						const familyRaw = window.prompt('Font family name for this session:', fallbackName);
-						if (!familyRaw) {
+						const familyRaw = await askUser('Font family name for this session', fallbackName);
+						if (familyRaw === null) {
 							return;
 						}
 						const family = familyRaw.trim();
@@ -603,21 +824,19 @@
 						const data = await file.arrayBuffer();
 						const fontFace = new FontFace(family, data);
 						await fontFace.load();
+						const previousFont = runtimeFontFaces.get(family);
+						if (previousFont) document.fonts.delete(previousFont);
 						document.fonts.add(fontFace);
 						runtimeFontFaces.set(family, fontFace);
-						ensureFontInList(family);
+						fontMetricCache.clear();
 						refreshFontSelect(family);
 						handleOptionChanged();
+						saveCurrentOptions();
 						setStatus(`Runtime font "${family}" loaded.`);
 					} catch (error) {
 						console.error(error);
 						setStatus(`Load font file failed: ${error.message || error}`, true);
 					}
-				}
-
-				function getRenderableText(textValue) {
-					const text = String(textValue || '').trim();
-					return text.length ? text : '?';
 				}
 
 				function measureStableFontMetrics(fontSpec, fontSizePx) {
@@ -636,64 +855,59 @@
 					return stable;
 				}
 
-				function createRenderModel(options, pxPerMil, marginPx) {
-					const text = getRenderableText(options.text);
-					const fontSizePx = Math.max(2, options.size * pxPerMil);
-					const paddingXPx = options.paddingX * pxPerMil;
-					const paddingYPx = options.paddingY * pxPerMil;
-					const fontFamily = options.font.replace(/"/g, '\\"');
-					const fontWeight = clampNumber(options.fontWeight, 400, 900, 700);
-
-					const fontSpec = `${fontWeight} ${fontSizePx}px "${fontFamily}"`;
+				function createRenderModel(options) {
+					const text = options.text.trim();
+					const fontFamily = options.font.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+					const fontSpec = `${options.fontWeight} ${options.size}px "${fontFamily}"`;
 					measureContext.font = fontSpec;
 					const metrics = measureContext.measureText(text);
 					const textWidthPx = Math.max(1, metrics.width || 1);
-					const { ascentPx, descentPx } = measureStableFontMetrics(fontSpec, fontSizePx);
+					const { ascentPx, descentPx } = measureStableFontMetrics(fontSpec, options.size);
 					const textHeightPx = Math.max(1, ascentPx + descentPx);
 
-					const naturalInnerWidthPx = Math.max(1, textWidthPx + paddingXPx * 2);
-					const fixedWidthPx = options.width > 0 ? options.width * pxPerMil : 0;
-					const innerWidthPx = Math.max(1, fixedWidthPx > 0 ? Math.max(fixedWidthPx, naturalInnerWidthPx) : naturalInnerWidthPx);
-					const shapeHeightPx = Math.max(1, textHeightPx + paddingYPx * 2);
-					const capDepthPx = Math.max(1, shapeHeightPx / 2);
-					const shapeWidthPx = innerWidthPx + capDepthPx * 2;
+					const innerWidthPx = Math.max(1, options.width, textWidthPx + options.paddingX * 2);
+					const heightMil = Math.max(1, textHeightPx + options.paddingY * 2);
+					const capDepthPx = heightMil / 2;
+					const widthMil = innerWidthPx + capDepthPx * 2;
 
-					const xLeftOut = marginPx;
-					const xLeftMid = marginPx + capDepthPx / 2;
-					const xLeftIn = marginPx + capDepthPx;
+					const xLeftOut = 0;
+					const xLeftMid = capDepthPx / 2;
+					const xLeftIn = capDepthPx;
 					const xRightIn = xLeftIn + innerWidthPx;
 					const xRightMid = xRightIn + capDepthPx / 2;
-					const xRightOut = xRightIn + capDepthPx;
-					const yTop = marginPx;
-					const yBottom = marginPx + shapeHeightPx;
-					const yMid = marginPx + shapeHeightPx / 2;
+					const xRightOut = widthMil;
+					const yTop = 0;
+					const yBottom = heightMil;
+					const yMid = capDepthPx;
 
 					let textX = xLeftIn + innerWidthPx / 2;
 					let textCanvasAlign = 'center';
 					if (options.textAlign === 'left') {
-						textX = xLeftIn + paddingXPx;
+						textX = xLeftIn + options.paddingX;
 						textCanvasAlign = 'left';
 					} else if (options.textAlign === 'right') {
-						textX = xRightIn - paddingXPx;
+						textX = xRightIn - options.paddingX;
 						textCanvasAlign = 'right';
 					}
 					const textY = yMid + (ascentPx - descentPx) / 2;
 
+					// Keep fillets within their end cap so a flat side can meet any opposite shape.
+					const radii = {};
+					for (const corner of CORNERS) {
+						const shape = corner.endsWith('Left') ? options.leftShape : options.rightShape;
+						radii[corner] = isSquareCap(shape) ? Math.min(options[corner], capDepthPx) : 0;
+					}
+
 					return {
 						text,
-						fontFamily,
-						fontWeight,
-						fontSizePx,
+						fontSpec,
 						textX,
 						textY,
 						textCanvasAlign,
-						pxPerMil,
-						shapeWidthPx,
-						shapeHeightPx,
-						widthMil: shapeWidthPx / pxPerMil,
-						heightMil: shapeHeightPx / pxPerMil,
-						canvasWidthPx: Math.ceil(shapeWidthPx + marginPx * 2),
-						canvasHeightPx: Math.ceil(shapeHeightPx + marginPx * 2),
+						widthMil,
+						heightMil,
+						radii,
+						mirror: options.layer === 4 && options.mirror,
 						bounds: {
 							xLeftOut,
 							xLeftMid,
@@ -715,9 +929,11 @@
 					const radius = (b.yBottom - b.yTop) / 2;
 					switch (model.rightShape) {
 						case '|':
+						case '[':
 						case ']':
-							ctx.moveTo(b.xRightOut, b.yTop);
-							ctx.lineTo(b.xRightOut, b.yBottom);
+							ctx.moveTo(b.xRightOut - model.radii.topRight, b.yTop);
+							ctx.arcTo(b.xRightOut, b.yTop, b.xRightOut, b.yBottom, model.radii.topRight);
+							ctx.arcTo(b.xRightOut, b.yBottom, b.xLeftOut, b.yBottom, model.radii.bottomRight);
 							break;
 						case '/':
 							ctx.moveTo(b.xRightOut, b.yTop);
@@ -755,8 +971,10 @@
 					switch (model.leftShape) {
 						case '|':
 						case '[':
-							ctx.lineTo(b.xLeftOut, b.yBottom);
-							ctx.lineTo(b.xLeftOut, b.yTop);
+						case ']':
+							ctx.lineTo(b.xLeftOut + model.radii.bottomLeft, b.yBottom);
+							ctx.arcTo(b.xLeftOut, b.yBottom, b.xLeftOut, b.yTop, model.radii.bottomLeft);
+							ctx.arcTo(b.xLeftOut, b.yTop, b.xRightOut, b.yTop, model.radii.topLeft);
 							break;
 						case '/':
 							ctx.lineTo(b.xLeftOut, b.yBottom);
@@ -788,47 +1006,55 @@
 					}
 				}
 
-				function drawLabel(ctx, model, whiteBackground) {
-					ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-					if (whiteBackground) {
-						ctx.fillStyle = '#ffffff';
-						ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-					}
-
+				function drawLabel(ctx, model, ink, whiteBackground) {
 					ctx.beginPath();
 					drawRightCap(ctx, model);
 					drawLeftCap(ctx, model);
 					ctx.closePath();
-					ctx.fillStyle = '#000000';
+					ctx.fillStyle = ink;
 					ctx.fill();
 
+					ctx.save();
+					ctx.globalCompositeOperation = whiteBackground ? 'source-over' : 'destination-out';
+					ctx.clip();
 					ctx.fillStyle = '#ffffff';
-					ctx.font = `${model.fontWeight} ${model.fontSizePx}px "${model.fontFamily}"`;
+					ctx.font = model.fontSpec;
 					ctx.textAlign = model.textCanvasAlign;
 					ctx.textBaseline = 'alphabetic';
 					ctx.fillText(model.text, model.textX, model.textY);
+					ctx.restore();
 				}
 
 				function renderPreview() {
 					const options = getFormOptions();
-					const roughModel = createRenderModel(options, 1, 0);
+					const model = createRenderModel(options);
+					const canvas = elements.previewCanvas;
+					const density = window.devicePixelRatio || 1;
+					const width = Math.round(canvas.clientWidth * density);
+					const height = Math.round(canvas.clientHeight * density);
+					if (width <= 24 * density || height <= 24 * density) return;
+					if (canvas.width !== width || canvas.height !== height) {
+						canvas.width = width;
+						canvas.height = height;
+					}
+					const inset = 24 * density;
+					const scale = Math.min((width - inset) / model.widthMil, (height - inset) / model.heightMil);
+					previewContext.clearRect(0, 0, width, height);
+					previewContext.save();
+					previewContext.translate((width - model.widthMil * scale) / 2, (height - model.heightMil * scale) / 2);
+					if (model.mirror) {
+						previewContext.translate(model.widthMil * scale, 0);
+					}
+					previewContext.scale(model.mirror ? -scale : scale, scale);
+					const ink = getComputedStyle(canvas).getPropertyValue('--silk').trim();
+					drawLabel(previewContext, model, ink, false);
+					previewContext.restore();
 
-					const safeWidth = Math.max(1, roughModel.widthMil);
-					const safeHeight = Math.max(1, roughModel.heightMil);
-					const scaleX = (elements.previewCanvas.width - 30) / safeWidth;
-					const scaleY = (elements.previewCanvas.height - 30) / safeHeight;
-					const previewScale = Math.max(0.1, Math.min(scaleX, scaleY));
-					const model = createRenderModel(options, previewScale, 6);
-
-					previewBufferCanvas.width = model.canvasWidthPx;
-					previewBufferCanvas.height = model.canvasHeightPx;
-					drawLabel(previewBufferContext, model, false);
-
-					previewContext.clearRect(0, 0, elements.previewCanvas.width, elements.previewCanvas.height);
-					const offsetX = Math.floor((elements.previewCanvas.width - model.canvasWidthPx) / 2);
-					const offsetY = Math.floor((elements.previewCanvas.height - model.canvasHeightPx) / 2);
-					previewContext.drawImage(previewBufferCanvas, offsetX, offsetY);
-					elements.previewMeta.textContent = `Label size: ${roughModel.widthMil.toFixed(1)} x ${roughModel.heightMil.toFixed(1)} mil`;
+					elements.previewMeta.textContent = `Label size: ${model.widthMil.toFixed(1)} × ${model.heightMil.toFixed(1)} mil${model.mirror ? ' · mirrored' : ''}`;
+					const limited = CORNERS.filter((corner) => model.radii[corner] > 0 && model.radii[corner] < options[corner]);
+					elements.cornerHint.textContent = limited.length
+						? `Large radii are limited to ${(model.heightMil / 2).toFixed(2)} mil (half the label height).`
+						: '0 keeps the corner square. The maximum radius is half the label height.';
 				}
 
 				function requestRenderPreview() {
@@ -841,14 +1067,12 @@
 					});
 				}
 
-				async function saveCurrentOptions() {
-					try {
-						if (window.eda?.sys_Storage?.setExtensionUserConfig) {
-							await eda.sys_Storage.setExtensionUserConfig(STORAGE_OPTIONS_KEY, getFormOptions());
-						}
-					} catch (error) {
-						console.warn('saveCurrentOptions failed', error);
-					}
+				function saveCurrentOptions() {
+					if (!window.eda?.sys_Storage?.setExtensionUserConfig) return;
+					const options = getFormOptions();
+					optionsWrite = optionsWrite
+						.then(() => eda.sys_Storage.setExtensionUserConfig(STORAGE_OPTIONS_KEY, options))
+						.catch((error) => console.warn('saveCurrentOptions failed', error));
 				}
 
 				function getSortedPresetNames() {
@@ -861,9 +1085,7 @@
 
 				function refreshPresetSelect(selectedName) {
 					const names = getSortedPresetNames();
-					elements.presetSelect.innerHTML = names
-						.map((name) => `<option value="${name}">${name}</option>`)
-						.join('');
+					elements.presetSelect.replaceChildren(...names.map((name) => new Option(name, name)));
 
 					const fallback = names.includes(selectedName) ? selectedName : 'Default';
 					elements.presetSelect.value = fallback;
@@ -871,19 +1093,22 @@
 					elements.deletePresetBtn.disabled = fallback === 'Default';
 				}
 
-				async function persistPresetMap() {
-					const customPresets = {};
-					for (const [name, options] of Object.entries(presetMap)) {
-						if (name !== 'Default') {
-							customPresets[name] = options;
-						}
-					}
+				async function commitPresetMap(next, selectedName, message) {
+					if (savingPreset) return;
+					savingPreset = true;
+					const { Default: _defaultPreset, ...customPresets } = next;
 					try {
-						if (window.eda?.sys_Storage?.setExtensionUserConfig) {
-							await eda.sys_Storage.setExtensionUserConfig(STORAGE_PRESETS_KEY, customPresets);
+						if (window.eda?.sys_Storage?.setExtensionUserConfig
+							&& !await eda.sys_Storage.setExtensionUserConfig(STORAGE_PRESETS_KEY, customPresets)) {
+							throw new Error('EasyEDA did not save the presets.');
 						}
+						presetMap = next;
+						refreshPresetSelect(selectedName);
+						setStatus(message);
 					} catch (error) {
-						console.warn('persistPresetMap failed', error);
+						setStatus(`Preset change failed: ${error.message || error}`, true);
+					} finally {
+						savingPreset = false;
 					}
 				}
 
@@ -893,14 +1118,13 @@
 
 					try {
 						if (window.eda?.sys_Storage?.getExtensionUserConfig) {
-							loadedOptions = eda.sys_Storage.getExtensionUserConfig(STORAGE_OPTIONS_KEY);
-							loadedPresets = eda.sys_Storage.getExtensionUserConfig(STORAGE_PRESETS_KEY);
+							loadedOptions = await eda.sys_Storage.getExtensionUserConfig(STORAGE_OPTIONS_KEY);
+							loadedPresets = await eda.sys_Storage.getExtensionUserConfig(STORAGE_PRESETS_KEY);
 						}
 					} catch (error) {
 						console.warn('loadSettings failed', error);
 					}
 
-					presetMap = { Default: { ...DEFAULT_OPTIONS } };
 					if (loadedPresets && typeof loadedPresets === 'object') {
 						for (const [name, value] of Object.entries(loadedPresets)) {
 							if (typeof name === 'string' && name.trim() && name !== 'Default') {
@@ -910,15 +1134,13 @@
 					}
 
 					const options = sanitizeOptions(loadedOptions);
-					ensureFontInList(options.font);
-					refreshFontSelect(options.font);
 					setFormOptions(options);
 					refreshPresetSelect('Default');
 				}
 
 				async function saveAsPreset() {
-					const nameRaw = window.prompt('Preset name:');
-					if (!nameRaw) {
+					const nameRaw = await askUser('Preset name', '');
+					if (nameRaw === null) {
 						return;
 					}
 					const name = nameRaw.trim();
@@ -926,11 +1148,12 @@
 						setStatus('Preset name cannot be empty.', true);
 						return;
 					}
-
-					presetMap[name] = getFormOptions();
-					refreshPresetSelect(name);
-					await persistPresetMap();
-					setStatus(`Preset "${name}" saved.`);
+					if (Object.hasOwn(presetMap, name)) {
+						setStatus('A preset with this name already exists. Use Update to overwrite a custom preset.', true);
+						return;
+					}
+					const next = Object.assign(Object.create(null), presetMap, { [name]: getFormOptions() });
+					await commitPresetMap(next, name, `Preset "${name}" saved.`);
 				}
 
 				async function updatePreset() {
@@ -939,9 +1162,8 @@
 						setStatus('Default preset cannot be overwritten.', true);
 						return;
 					}
-					presetMap[selected] = getFormOptions();
-					await persistPresetMap();
-					setStatus(`Preset "${selected}" updated.`);
+					const next = Object.assign(Object.create(null), presetMap, { [selected]: getFormOptions() });
+					await commitPresetMap(next, selected, `Preset "${selected}" updated.`);
 				}
 
 				async function deletePreset() {
@@ -950,15 +1172,13 @@
 						setStatus('Default preset cannot be deleted.', true);
 						return;
 					}
-					const ok = window.confirm(`Delete preset "${selected}"?`);
-					if (!ok) {
+					if (await askUser(`Delete preset "${selected}"?`, undefined, 'Delete') === null) {
 						return;
 					}
 
-					delete presetMap[selected];
-					refreshPresetSelect('Default');
-					await persistPresetMap();
-					setStatus(`Preset "${selected}" removed.`);
+					const next = Object.assign(Object.create(null), presetMap);
+					delete next[selected];
+					await commitPresetMap(next, 'Default', `Preset "${selected}" removed.`);
 				}
 
 				function applySelectedPreset() {
@@ -976,12 +1196,8 @@
 				}
 
 				function handleOptionChanged() {
-					const options = getFormOptions();
-					ensureFontInList(options.font);
-					refreshFontSelect(options.font);
-					setFormOptions(options);
+					updateControlAvailability(getFormOptions());
 					requestRenderPreview();
-					void saveCurrentOptions();
 				}
 
 				function normalizePolygonArray(rawPolygon) {
@@ -1079,16 +1295,26 @@
 
 				async function buildLabelImageData(options) {
 					const qualityProfile = QUALITY_PROFILES[options.quality] || QUALITY_PROFILES.ultra;
-					const model = createRenderModel(options, qualityProfile.rasterScale, 0);
+					const model = createRenderModel(options);
 					if (model.widthMil > 10000 || model.heightMil > 5000) {
 						throw new Error('Label is too large. Reduce size or width.');
 					}
+					const scale = Math.min(
+						qualityProfile.rasterScale,
+						MAX_RASTER_SIDE / Math.max(model.widthMil, model.heightMil),
+						Math.sqrt(MAX_RASTER_PIXELS / (model.widthMil * model.heightMil)),
+					);
 					const canvas = document.createElement('canvas');
-					canvas.width = model.canvasWidthPx;
-					canvas.height = model.canvasHeightPx;
+					canvas.width = Math.ceil(model.widthMil * scale);
+					canvas.height = Math.ceil(model.heightMil * scale);
 					const context = canvas.getContext('2d');
 
-					drawLabel(context, model, true);
+					context.fillStyle = '#ffffff';
+					context.fillRect(0, 0, canvas.width, canvas.height);
+					context.save();
+					context.scale(canvas.width / model.widthMil, canvas.height / model.heightMil);
+					drawLabel(context, model, '#000000', true);
+					context.restore();
 					if (qualityProfile.binarize) {
 						binarizeCanvas(context);
 					}
@@ -1128,6 +1354,7 @@
 						complexPolygon: polygonData,
 						width: model.widthMil,
 						height: model.heightMil,
+						mirror: model.mirror,
 					};
 				}
 
@@ -1138,58 +1365,47 @@
 					};
 				}
 
-				async function updateFloatingPlacementPosition() {
-					if (!floatingPlacement) {
-						return;
-					}
+				async function updateFloatingPlacementPosition(placement) {
 					try {
 						const pointer = await eda.pcb_SelectControl.getCurrentMousePosition();
-						if (!pointer || !Number.isFinite(pointer.x) || !Number.isFinite(pointer.y)) {
+						if (floatingPlacement !== placement || !pointer || !Number.isFinite(pointer.x) || !Number.isFinite(pointer.y)) {
 							return;
 						}
-						const topLeft = toTopLeft(pointer, floatingPlacement.width, floatingPlacement.height);
-						await eda.pcb_PrimitiveImage.modify(floatingPlacement.primitiveId, {
-							x: topLeft.x,
-							y: topLeft.y,
-						});
+						const topLeft = toTopLeft(pointer, placement.width, placement.height);
+						if (topLeft.x === placement.position.x && topLeft.y === placement.position.y) return;
+						if (await eda.pcb_PrimitiveImage.modify(placement.primitiveId, topLeft)) {
+							placement.position = topLeft;
+						}
 					} catch (error) {
 						console.error('floating placement update failed', error);
 					}
 				}
 
-				async function stopFloatingPlacement(showWindow) {
-					if (floatingPlacement?.timer) {
-						clearInterval(floatingPlacement.timer);
-					}
-					if (typeof floatingPlacement?.removeEscListener === 'function') {
-						try {
-							floatingPlacement.removeEscListener();
-						} catch (error) {
-							console.warn('remove esc listener failed', error);
-						}
-					}
-					eda.pcb_Event.removeEventListener(FLOAT_PLACE_EVENT_ID);
+				async function finishFloatingPlacement(cancel, showWindow = true) {
+					const placement = floatingPlacement;
+					if (!placement) return;
 					floatingPlacement = null;
+					clearInterval(placement.timer);
+					placement.removeEscListener();
+					try {
+						eda.pcb_Event.removeEventListener(FLOAT_PLACE_EVENT_ID);
+					} catch (error) {
+						console.warn('Remove placement listener failed', error);
+					}
+					try {
+						await placement.pending;
+						if (cancel && !await eda.pcb_PrimitiveImage.delete(placement.primitiveId)) {
+							throw new Error('EasyEDA could not remove the temporary label.');
+						}
+						setStatus(cancel ? 'Placement canceled.' : 'Label placed successfully.');
+					} catch (error) {
+						setStatus(`Placement failed: ${error.message || error}`, true);
+						eda.sys_Message?.showToastMessage?.(elements.statusLine.textContent, 'error', 4);
+					}
 					if (showWindow) {
 						await eda.sys_IFrame.showIFrame(IFRAME_ID);
 						elements.labelText.focus();
 						elements.labelText.select();
-					}
-				}
-
-				async function cancelFloatingPlacementByEsc() {
-					if (!floatingPlacement) {
-						return;
-					}
-					try {
-						await eda.pcb_PrimitiveImage.delete(floatingPlacement.primitiveId);
-					} catch (error) {
-						console.warn('delete floating primitive failed', error);
-					}
-					await stopFloatingPlacement(true);
-					setStatus('Placement canceled. You can edit settings and place again.');
-					if (eda.sys_Message?.showToastMessage) {
-						eda.sys_Message.showToastMessage('Placement canceled.', 'info', 2);
 					}
 				}
 
@@ -1204,7 +1420,7 @@
 						}
 						event.preventDefault();
 						event.stopPropagation();
-						void cancelFloatingPlacementByEsc();
+						void finishFloatingPlacement(true);
 					};
 					const targets = [];
 					const register = (target) => {
@@ -1241,22 +1457,20 @@
 					};
 				}
 
-				async function startFloatingPlacement(primitiveId, width, height) {
-					const timer = setInterval(() => {
-						void updateFloatingPlacementPosition();
+				function startFloatingPlacement(primitiveId, width, height, position) {
+					const placement = { primitiveId, width, height, position, pending: null };
+					placement.removeEscListener = attachFloatingEscListener();
+					floatingPlacement = placement;
+					placement.timer = setInterval(() => {
+						if (!placement.pending) {
+							placement.pending = updateFloatingPlacementPosition(placement)
+								.finally(() => { placement.pending = null; });
+						}
 					}, 28);
-					const removeEscListener = attachFloatingEscListener();
-					floatingPlacement = { primitiveId, width, height, timer, removeEscListener };
 					eda.pcb_Event.addMouseEventListener(
 						FLOAT_PLACE_EVENT_ID,
 						'selected',
-						async () => {
-							await stopFloatingPlacement(true);
-							setStatus('Label placed successfully.');
-							if (eda.sys_Message?.showToastMessage) {
-								eda.sys_Message.showToastMessage('Label placed.', 'success', 2);
-							}
-						},
+						() => finishFloatingPlacement(false),
 						true,
 					);
 				}
@@ -1273,16 +1487,22 @@
 						setStatus('Finish current floating placement with one click on PCB.', true);
 						return;
 					}
+					const options = getFormOptions();
+					if (!options.text.trim()) {
+						setStatus('Enter label text before placing.', true);
+						elements.labelText.focus();
+						return;
+					}
 
 					placing = true;
 					elements.placeBtn.disabled = true;
+					elements.closeBtn.disabled = true;
 					setStatus('Generating label...');
 
 					try {
 						await new Promise((resolve) => {
 							setTimeout(resolve, 16);
 						});
-						const options = getFormOptions();
 						const imageData = await buildLabelImageData(options);
 
 						const pointer = await eda.pcb_SelectControl.getCurrentMousePosition();
@@ -1300,21 +1520,24 @@
 							imageData.width,
 							imageData.height,
 							0,
-							options.mirror,
+							imageData.mirror,
 							false,
 						);
 						if (!created) {
 							throw new Error('Image primitive creation failed.');
 						}
 
-						void saveCurrentOptions();
-						await startFloatingPlacement(created.getState_PrimitiveId(), imageData.width, imageData.height);
-						await eda.sys_IFrame.hideIFrame(IFRAME_ID);
 						setStatus('Move cursor on PCB and click once to place. Press Esc to cancel.');
+						saveCurrentOptions();
+						startFloatingPlacement(created.getState_PrimitiveId(), imageData.width, imageData.height, topLeft);
+						if (!await eda.sys_IFrame.hideIFrame(IFRAME_ID)) {
+							throw new Error('EasyEDA could not hide the settings window.');
+						}
 						if (eda.sys_Message?.showToastMessage) {
 							eda.sys_Message.showToastMessage('Move cursor and click once to place label. Press Esc to cancel.', 'info', 3);
 						}
 					} catch (error) {
+						if (floatingPlacement) await finishFloatingPlacement(true, false);
 						console.error(error);
 						setStatus(`Place failed: ${error.message || error}`, true);
 						if (eda.sys_Message?.showToastMessage) {
@@ -1323,6 +1546,7 @@
 					} finally {
 						placing = false;
 						elements.placeBtn.disabled = false;
+						elements.closeBtn.disabled = false;
 					}
 				}
 
@@ -1338,6 +1562,7 @@
 					const optionControls = [
 						elements.leftShape,
 						elements.rightShape,
+						...CORNERS.map((corner) => elements[corner]),
 						elements.labelText,
 						elements.fontFamily,
 						elements.fontWeight,
@@ -1352,8 +1577,15 @@
 					];
 
 					for (const control of optionControls) {
-						control.addEventListener('change', handleOptionChanged);
 						control.addEventListener('input', handleOptionChanged);
+						control.addEventListener('change', () => {
+							if (control.type === 'number') {
+								const key = { fontSize: 'size', labelWidth: 'width' }[control.id] || control.id;
+								control.value = String(getFormOptions()[key]);
+							}
+							handleOptionChanged();
+							saveCurrentOptions();
+						});
 					}
 
 					elements.labelText.addEventListener('keydown', (event) => {
@@ -1386,10 +1618,17 @@
 				}
 
 				async function bootstrap() {
+					document.documentElement.dataset.theme = systemTheme.matches ? 'dark' : 'light';
+					void syncTheme();
+					systemTheme.addEventListener('change', syncTheme);
+					window.addEventListener('focus', syncTheme);
+					// The extension API exposes the current theme but no theme-change event.
+					setInterval(syncTheme, 1500);
 					populateShapeSelects();
-					bindEvents();
 					await loadFonts();
 					await loadSettings();
+					bindEvents();
+					new ResizeObserver(requestRenderPreview).observe(elements.previewCanvas);
 					renderPreview();
 					elements.labelText.focus();
 					elements.labelText.select();

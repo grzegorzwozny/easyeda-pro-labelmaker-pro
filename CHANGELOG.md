@@ -1,27 +1,13 @@
-# 1.2.0
+# Changelog
 
-## 变更
+## 1.1.0
 
-1. 使用纯 ESLint 的代码格式化方式
-2. 打包时额外进行压缩，可以获得更小的扩展包
+- Added independent corner radii for flat ends, with live preview and preset support.
+- Matched the EasyEDA Pro light and dark themes throughout the dialog, including prompts, controls, and the preview.
+- Added a bottom-side mirror preview and aligned preview dimensions with the geometry sent to the PCB.
+- Fixed numeric input editing, preset and font name handling, and placement cleanup after cancellation or a failed start.
+- Limited raster memory for large labels and added a dedicated Extension Manager icon, install instructions, and release notes.
 
-# 1.1.1
+## 1.0.0
 
-## 变更
-
-1. 为了符合隐私政策，禁止在 extension.json、README.md、CHANGELOG.md、LICENSE 内添加电子邮箱地址作为联系方式
-
-# 1.1.0
-
-## 新增
-
-1. 新增扩展注册头部菜单的多语言翻译支持
-2. 新增更新日志（CHANGELOG.md）
-
-## 变更
-
-1. 替换已弃用的方法（SYS_Dialog.showInformationMessage）
-
-# 1.0.0
-
-初始版本
+- Initial Label Maker Pro release with shaped ends, cutout text, presets, and top and bottom silkscreen placement.

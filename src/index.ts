@@ -13,7 +13,7 @@ export async function openLabelMaker(): Promise<void> {
 		return;
 	}
 
-	await eda.sys_IFrame.openIFrame('/iframe/index.html', 580, 780, IFRAME_ID, {
+	await eda.sys_IFrame.openIFrame('/iframe/index.html', 580, 790, IFRAME_ID, {
 		maximizeButton: true,
 		minimizeButton: true,
 	});
