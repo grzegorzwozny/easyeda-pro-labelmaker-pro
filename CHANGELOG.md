@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Set the marketplace author to Moisen.
+
 ## 1.1.1
 
 - Bundled the animated label preview and EasyEDA Pro screenshot with the README so both are available in the marketplace package.
