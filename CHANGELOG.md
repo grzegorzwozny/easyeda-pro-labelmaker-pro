@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0
+
+- Added optional millimetre controls for visible text height, total text width, and reference stem thickness. The preview and PCB placement use the same measurements.
+- Saved the sizing mode with presets. Existing presets continue to use their original font size.
+
 ## 1.1.2
 
 - Set the marketplace author to Moisen.

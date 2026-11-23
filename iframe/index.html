@@ -311,7 +311,7 @@
 			<header class="header">
 				<div>
 					<h1 class="title">Label Maker Pro</h1>
-					<p class="subtitle">Shaped labels with text cutout. All dimensions are in mil.</p>
+					<p class="subtitle">Silkscreen labels with cutout text.</p>
 				</div>
 			</header>
 
@@ -401,26 +401,54 @@
 					</div>
 				</div>
 
-				<div class="row cols-3">
+				<div class="row cols-2">
 					<label>
-						Font Size
+						Text sizing
+						<select id="textSizing">
+							<option value="font">Font size</option>
+							<option value="physical">Physical dimensions (mm)</option>
+						</select>
+					</label>
+					<label id="fontSizeField">
+						Font Size (mil)
 						<input id="fontSize" type="number" step="1" min="2" max="1000" />
 					</label>
-					<label>
-						Padding X
-						<input id="paddingX" type="number" step="1" min="-200" max="1000" />
+					<label id="textHeightField" hidden>
+						Text height (mm)
+						<input id="textHeightMm" type="number" step="any" min="0.01" max="127" inputmode="decimal" />
 					</label>
-					<label>
-						Padding Y
-						<input id="paddingY" type="number" step="1" min="-200" max="1000" />
-					</label>
+				</div>
+
+				<div id="physicalFields" hidden>
+					<div class="row cols-2">
+						<label>
+							Text width (mm)
+							<input id="textWidthMm" type="number" step="any" min="0" max="254" inputmode="decimal" placeholder="Auto" />
+						</label>
+						<label>
+							Stroke thickness (mm)
+							<input id="strokeMm" type="number" step="any" min="0" max="127" inputmode="decimal" placeholder="Auto" />
+						</label>
+					</div>
+					<p class="hint">Auto width keeps the font proportions. Auto stroke uses the font weight. A numeric stroke sets the width of the upright stem in H.</p>
 				</div>
 
 				<div class="row cols-3">
 					<label>
-						Width (0 = Auto)
+						Label width (mil, 0 = Auto)
 						<input id="labelWidth" type="number" step="1" min="0" max="20000" />
 					</label>
+					<label>
+						Padding X (mil)
+						<input id="paddingX" type="number" step="1" min="-200" max="1000" />
+					</label>
+					<label>
+						Padding Y (mil)
+						<input id="paddingY" type="number" step="1" min="-200" max="1000" />
+					</label>
+				</div>
+
+				<div class="row cols-2">
 					<label>
 						Align
 						<select id="textAlign">
@@ -473,6 +501,9 @@
 				const MIN_POLYGON_AREA_MIL2 = 0.6;
 				const MAX_RASTER_SIDE = 8192;
 				const MAX_RASTER_PIXELS = 16_000_000;
+				const MAX_TEXT_MASK_PIXELS = 4_000_000;
+				const MM_PER_MIL = 0.0254;
+				const METRIC_FONT_SIZE = 512;
 				const QUALITY_PROFILES = {
 					ultra: {
 						rasterScale: 12,
@@ -513,6 +544,10 @@
 					font: 'Arial',
 					fontWeight: 700,
 					size: 55,
+					textSizing: 'font',
+					textHeightMm: 1.5,
+					textWidthMm: 0,
+					strokeMm: 0,
 					paddingX: 10,
 					paddingY: 6,
 					width: 0,
@@ -545,6 +580,13 @@
 					addFontBtn: document.getElementById('addFontBtn'),
 					importFontBtn: document.getElementById('importFontBtn'),
 					fontSize: document.getElementById('fontSize'),
+					textSizing: document.getElementById('textSizing'),
+					fontSizeField: document.getElementById('fontSizeField'),
+					textHeightField: document.getElementById('textHeightField'),
+					physicalFields: document.getElementById('physicalFields'),
+					textHeightMm: document.getElementById('textHeightMm'),
+					textWidthMm: document.getElementById('textWidthMm'),
+					strokeMm: document.getElementById('strokeMm'),
 					paddingX: document.getElementById('paddingX'),
 					paddingY: document.getElementById('paddingY'),
 					labelWidth: document.getElementById('labelWidth'),
@@ -564,6 +606,11 @@
 				const previewContext = elements.previewCanvas.getContext('2d');
 				const measureCanvas = document.createElement('canvas');
 				const measureContext = measureCanvas.getContext('2d');
+				const sampleCanvas = document.createElement('canvas');
+				const sampleContext = sampleCanvas.getContext('2d', { willReadFrequently: true });
+				const textMask = document.createElement('canvas');
+				const maskContext = textMask.getContext('2d', { willReadFrequently: true });
+				let lastPhysicalText;
 				const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
 
 				let placing = false;
@@ -632,6 +679,10 @@
 					elements.leftCorners.hidden = !left;
 					elements.rightCorners.hidden = !right;
 					elements.mirror.disabled = options.layer !== 4;
+					const physical = options.textSizing === 'physical';
+					elements.fontSizeField.hidden = physical;
+					elements.textHeightField.hidden = !physical;
+					elements.physicalFields.hidden = !physical;
 				}
 
 				function clampNumber(value, minimum, maximum, fallback) {
@@ -658,6 +709,10 @@
 					const weight = Number(raw.fontWeight);
 					if ([400, 500, 600, 700, 800].includes(weight)) next.fontWeight = weight;
 					next.size = clampNumber(raw.size, 2, 1000, next.size);
+					next.textSizing = raw.textSizing === 'physical' ? 'physical' : 'font';
+					next.textHeightMm = clampNumber(raw.textHeightMm, 0.01, 127, next.textHeightMm);
+					next.textWidthMm = clampNumber(raw.textWidthMm, 0, 254, 0);
+					next.strokeMm = clampNumber(raw.strokeMm, 0, 127, 0);
 					next.paddingX = clampNumber(raw.paddingX, -200, 1000, next.paddingX);
 					next.paddingY = clampNumber(raw.paddingY, -200, 1000, next.paddingY);
 					next.width = clampNumber(raw.width, 0, 20000, next.width);
@@ -680,6 +735,10 @@
 						font: elements.fontFamily.value,
 						fontWeight: elements.fontWeight.value,
 						size: elements.fontSize.value,
+						textSizing: elements.textSizing.value,
+						textHeightMm: elements.textHeightMm.valueAsNumber,
+						textWidthMm: elements.textWidthMm.valueAsNumber,
+						strokeMm: elements.strokeMm.valueAsNumber,
 						paddingX: elements.paddingX.value,
 						paddingY: elements.paddingY.value,
 						width: elements.labelWidth.value,
@@ -700,6 +759,10 @@
 					refreshFontSelect(options.font);
 					elements.fontWeight.value = String(options.fontWeight);
 					elements.fontSize.value = String(options.size);
+					elements.textSizing.value = options.textSizing;
+					elements.textHeightMm.value = String(options.textHeightMm);
+					elements.textWidthMm.value = options.textWidthMm || '';
+					elements.strokeMm.value = options.strokeMm || '';
 					elements.paddingX.value = String(options.paddingX);
 					elements.paddingY.value = String(options.paddingY);
 					elements.labelWidth.value = String(options.width);
@@ -772,6 +835,7 @@
 					fontsList = Array.from(new Set(fontsList.filter(Boolean)));
 					fontsList.sort((a, b) => a.localeCompare(b));
 					fontMetricCache.clear();
+					lastPhysicalText = undefined;
 				}
 
 				async function addFontByName() {
@@ -829,6 +893,7 @@
 						document.fonts.add(fontFace);
 						runtimeFontFaces.set(family, fontFace);
 						fontMetricCache.clear();
+						lastPhysicalText = undefined;
 						refreshFontSelect(family);
 						handleOptionChanged();
 						saveCurrentOptions();
@@ -855,15 +920,130 @@
 					return stable;
 				}
 
+				// Baseline-relative ink bounds, including overhangs, accents and descenders.
+				function inkBounds(text) {
+					const metrics = measureContext.measureText(text);
+					return {
+						left: -metrics.actualBoundingBoxLeft,
+						top: -metrics.actualBoundingBoxAscent,
+						width: metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight,
+						height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent,
+					};
+				}
+
+				function sampleText(ctx, text, fontSpec, bounds, adjustment, density) {
+					const margin = 2 + Math.max(0, adjustment) / 2;
+					const width = bounds.width + 2 * margin;
+					const height = bounds.height + 2 * margin;
+					const scale = Math.min(density, MAX_RASTER_SIDE / Math.max(width, height),
+						Math.sqrt(MAX_TEXT_MASK_PIXELS / (width * height)));
+					ctx.canvas.width = Math.max(1, Math.ceil(width * scale));
+					ctx.canvas.height = Math.max(1, Math.ceil(height * scale));
+					const originX = margin - bounds.left;
+					const originY = margin - bounds.top;
+					ctx.setTransform(scale, 0, 0, scale, originX * scale, originY * scale);
+					ctx.font = fontSpec;
+					ctx.textAlign = 'left';
+					ctx.fillStyle = '#fff';
+					ctx.fillText(text, 0, 0);
+					if (adjustment) {
+						ctx.lineJoin = 'round';
+						ctx.lineWidth = Math.abs(adjustment);
+						ctx.strokeStyle = '#fff';
+						if (adjustment < 0) ctx.globalCompositeOperation = 'destination-out';
+						ctx.strokeText(text, 0, 0);
+					}
+					return { scale, originY };
+				}
+
+				function visibleMaskBounds() {
+					const { width, height } = textMask;
+					const pixels = maskContext.getImageData(0, 0, width, height).data;
+					let left = width;
+					let right = -1;
+					let top = height;
+					let bottom = -1;
+					for (let y = 0; y < height; y++) {
+						const row = 4 * y * width + 3;
+						let start = 0;
+						while (start < width && pixels[row + start * 4] < 128) start++;
+						if (start === width) continue;
+						let end = width - 1;
+						while (end > start && pixels[row + end * 4] < 128) end--;
+						left = Math.min(left, start);
+						right = Math.max(right, end);
+						top = Math.min(top, y);
+						bottom = y;
+					}
+					if (right < left) throw new Error('The chosen stroke removes all the text. Increase it or use Auto.');
+					return { left, top, width: right - left + 1, height: bottom - top + 1 };
+				}
+
+				function measureStem(fontSpec, reference, adjustment, density) {
+					const { scale, originY } = sampleText(sampleContext, 'H', fontSpec, reference, adjustment, density);
+					const stems = [];
+					for (const fraction of [0.25, 0.75]) {
+						const y = Math.floor((originY + reference.top + fraction * reference.height) * scale);
+						const row = sampleContext.getImageData(0, y, sampleCanvas.width, 1).data;
+						const runs = [];
+						let run = 0;
+						for (let alpha = 3; alpha < row.length; alpha += 4) {
+							if (row[alpha]) run += row[alpha] / 255;
+							else if (run) {
+								runs.push(run / scale);
+								run = 0;
+							}
+						}
+						if (run) runs.push(run / scale);
+						if (runs.length === 2) stems.push(runs[0]);
+					}
+					if (!stems.length) throw new Error('Cannot measure separate H stems at this thickness. Change the stroke or use Auto.');
+					return stems.reduce((sum, stem) => sum + stem, 0) / stems.length;
+				}
+
+				function measurePhysicalText(text, fontSpec, options) {
+					const key = JSON.stringify([text, fontSpec, options.textHeightMm, options.textWidthMm, options.strokeMm]);
+					if (lastPhysicalText?.key === key) return lastPhysicalText;
+					// The cached bounds refer to this mask. Invalidate them before reusing its canvas.
+					lastPhysicalText = undefined;
+					const natural = inkBounds(text);
+					if (!(natural.width > 0 && natural.height > 0)) throw new Error('Enter visible text to measure its dimensions.');
+					const height = options.textHeightMm / MM_PER_MIL;
+					const width = options.textWidthMm / MM_PER_MIL;
+					const stroke = options.strokeMm / MM_PER_MIL;
+					const reference = inkBounds('H');
+					const density = Math.max(1, QUALITY_PROFILES.ultra.rasterScale *
+						Math.max(height / natural.height, width / natural.width));
+					let adjustment = 0;
+					for (let attempt = 0; attempt < 6; attempt++) {
+						const { scale } = sampleText(maskContext, text, fontSpec, natural, adjustment, density);
+						const bounds = visibleMaskBounds();
+						const milPerPixel = width ? width / bounds.width : height / bounds.height;
+						const milPerFontUnit = milPerPixel * scale;
+						const measured = stroke ? measureStem(fontSpec, reference, adjustment, scale) * milPerFontUnit : 0;
+						if (Math.abs(stroke - measured) <= Math.max(0.0015 / MM_PER_MIL, stroke * 0.005)) {
+							lastPhysicalText = { key, bounds, width: width || bounds.width * milPerPixel, height };
+							return lastPhysicalText;
+						}
+						// Changing the outline also changes the scale needed to fit the target box.
+						const ratio = stroke / (width || height);
+						if (ratio >= 1) break;
+						adjustment += (stroke - measured) / milPerFontUnit / (1 - ratio);
+						if (Math.abs(adjustment) > 2 * METRIC_FONT_SIZE) break;
+					}
+					throw new Error('The stroke cannot fit these text dimensions. Change the stroke, width or height.');
+				}
+
 				function createRenderModel(options) {
 					const text = options.text.trim();
 					const fontFamily = options.font.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-					const fontSpec = `${options.fontWeight} ${options.size}px "${fontFamily}"`;
+					const usePhysical = options.textSizing === 'physical';
+					const fontSpec = `${options.fontWeight} ${usePhysical ? METRIC_FONT_SIZE : options.size}px "${fontFamily}"`;
 					measureContext.font = fontSpec;
-					const metrics = measureContext.measureText(text);
-					const textWidthPx = Math.max(1, metrics.width || 1);
-					const { ascentPx, descentPx } = measureStableFontMetrics(fontSpec, options.size);
-					const textHeightPx = Math.max(1, ascentPx + descentPx);
+					const physical = usePhysical ? measurePhysicalText(text, fontSpec, options) : null;
+					const textWidthPx = physical ? physical.width : Math.max(1, measureContext.measureText(text).width || 1);
+					const vertical = physical ? null : measureStableFontMetrics(fontSpec, options.size);
+					const textHeightPx = physical ? physical.height : Math.max(1, vertical.ascentPx + vertical.descentPx);
 
 					const innerWidthPx = Math.max(1, options.width, textWidthPx + options.paddingX * 2);
 					const heightMil = Math.max(1, textHeightPx + options.paddingY * 2);
@@ -889,7 +1069,14 @@
 						textX = xRightIn - options.paddingX;
 						textCanvasAlign = 'right';
 					}
-					const textY = yMid + (ascentPx - descentPx) / 2;
+					let textY;
+					if (physical) {
+						if (textCanvasAlign === 'center') textX -= physical.width / 2;
+						if (textCanvasAlign === 'right') textX -= physical.width;
+						textY = yMid - physical.height / 2;
+					} else {
+						textY = yMid + (vertical.ascentPx - vertical.descentPx) / 2;
+					}
 
 					// Keep fillets within their end cap so a flat side can meet any opposite shape.
 					const radii = {};
@@ -904,6 +1091,7 @@
 						textX,
 						textY,
 						textCanvasAlign,
+						physical,
 						widthMil,
 						heightMil,
 						radii,
@@ -1021,13 +1209,19 @@
 					ctx.font = model.fontSpec;
 					ctx.textAlign = model.textCanvasAlign;
 					ctx.textBaseline = 'alphabetic';
-					ctx.fillText(model.text, model.textX, model.textY);
+					if (model.physical) {
+						const { bounds, width, height } = model.physical;
+						ctx.imageSmoothingQuality = 'high';
+						ctx.drawImage(textMask, bounds.left, bounds.top, bounds.width, bounds.height,
+							model.textX, model.textY, width, height);
+					} else {
+						ctx.fillText(model.text, model.textX, model.textY);
+					}
 					ctx.restore();
 				}
 
 				function renderPreview() {
 					const options = getFormOptions();
-					const model = createRenderModel(options);
 					const canvas = elements.previewCanvas;
 					const density = window.devicePixelRatio || 1;
 					const width = Math.round(canvas.clientWidth * density);
@@ -1037,9 +1231,18 @@
 						canvas.width = width;
 						canvas.height = height;
 					}
+					previewContext.clearRect(0, 0, width, height);
+					let model;
+					try {
+						model = createRenderModel(options);
+					} catch (error) {
+						elements.previewMeta.textContent = error.message;
+						elements.placeBtn.disabled = true;
+						return;
+					}
+					elements.placeBtn.disabled = placing;
 					const inset = 24 * density;
 					const scale = Math.min((width - inset) / model.widthMil, (height - inset) / model.heightMil);
-					previewContext.clearRect(0, 0, width, height);
 					previewContext.save();
 					previewContext.translate((width - model.widthMil * scale) / 2, (height - model.heightMil * scale) / 2);
 					if (model.mirror) {
@@ -1051,6 +1254,9 @@
 					previewContext.restore();
 
 					elements.previewMeta.textContent = `Label size: ${model.widthMil.toFixed(1)} × ${model.heightMil.toFixed(1)} mil${model.mirror ? ' · mirrored' : ''}`;
+					if (model.physical) {
+						elements.previewMeta.textContent += ` · Text ${(model.physical.width * MM_PER_MIL).toFixed(2)} × ${options.textHeightMm.toFixed(2)} mm`;
+					}
 					const limited = CORNERS.filter((corner) => model.radii[corner] > 0 && model.radii[corner] < options[corner]);
 					elements.cornerHint.textContent = limited.length
 						? `Large radii are limited to ${(model.heightMil / 2).toFixed(2)} mil (half the label height).`
@@ -1547,6 +1753,7 @@
 						placing = false;
 						elements.placeBtn.disabled = false;
 						elements.closeBtn.disabled = false;
+						requestRenderPreview();
 					}
 				}
 
@@ -1569,6 +1776,10 @@
 						elements.layer,
 						elements.quality,
 						elements.fontSize,
+						elements.textSizing,
+						elements.textHeightMm,
+						elements.textWidthMm,
+						elements.strokeMm,
 						elements.paddingX,
 						elements.paddingY,
 						elements.labelWidth,
@@ -1581,7 +1792,8 @@
 						control.addEventListener('change', () => {
 							if (control.type === 'number') {
 								const key = { fontSize: 'size', labelWidth: 'width' }[control.id] || control.id;
-								control.value = String(getFormOptions()[key]);
+								const value = getFormOptions()[key];
+								control.value = value === 0 && (key === 'textWidthMm' || key === 'strokeMm') ? '' : String(value);
 							}
 							handleOptionChanged();
 							saveCurrentOptions();

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Label Maker Pro physical sizing regression test</title>
+<pre id="results">Running…</pre>
+<iframe title="Extension under test" width="580" height="950"></iframe>
+<script type="module">
+	// Serve the repository root over HTTP and open this page in Chromium.
+	const frame = document.querySelector('iframe');
+	const results = document.querySelector('#results');
+	const stored = {
+		'labelMaker.options.v1': { text: 'H', size: 68, leftShape: '|', rightShape: '|' },
+		'labelMaker.presets.v1': { Legacy: { text: 'GND', size: 77 } },
+	};
+	let capture, placement, finishPlacement;
+	window.testEda = {
+		sys_Storage: {
+			getExtensionUserConfig: key => stored[key],
+			setExtensionUserConfig: (key, value) => { stored[key] = structuredClone(value); return true; },
+		},
+		pcb_MathPolygon: {
+			convertImageToComplexPolygon(blob, width, height) {
+				capture = { blob, width, height };
+				return { complexPolygon: [[0, 0, 'L', width, 0, 'L', width, height, 'L', 0, height]] };
+			},
+		},
+		pcb_PrimitiveImage: {
+			create(...args) { placement = args; return { getState_PrimitiveId: () => 'test-image' }; },
+			modify: () => true,
+		},
+		pcb_SelectControl: { getCurrentMousePosition: () => ({ x: 100, y: 100 }) },
+		pcb_Layer: { selectLayer() {} },
+		pcb_Event: { addMouseEventListener(id, event, callback) { finishPlacement = callback; }, removeEventListener() {} },
+		sys_IFrame: { hideIFrame: () => true, showIFrame: () => true },
+	};
+
+	const field = id => frame.contentDocument.getElementById(id);
+	function check(ok, message) { if (!ok) throw new Error(message); }
+	function near(value, target, tolerance, message) {
+		check(Math.abs(value - target) <= tolerance, message + ': got ' + value + ', expected ' + target);
+	}
+	async function until(condition) {
+		const end = performance.now() + 5000;
+		while (!condition()) {
+			check(performance.now() < end, 'Timed out waiting for the extension: ' + field('statusLine')?.textContent);
+			await new Promise(resolve => setTimeout(resolve, 10));
+		}
+	}
+	async function setFields(values) {
+		for (const [id, value] of Object.entries(values)) {
+			field(id).value = value;
+			field(id).dispatchEvent(new Event('change', { bubbles: true }));
+		}
+		await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+	}
+
+	// Read the white letter cutouts from the exact PNG passed to EasyEDA, inside a flat black label.
+	async function measurePlacement() {
+		check(!field('placeBtn').disabled, field('previewMeta').textContent);
+		capture = placement = finishPlacement = null;
+		field('placeBtn').click();
+		await until(() => finishPlacement);
+		check(placement[4] === capture.width && placement[5] === capture.height, 'Raster and PCB dimensions differ');
+		await finishPlacement();
+		const bmp = await createImageBitmap(capture.blob);
+		const canvas = document.createElement('canvas');
+		canvas.width = bmp.width;
+		canvas.height = bmp.height;
+		const ctx = canvas.getContext('2d');
+		ctx.drawImage(bmp, 0, 0);
+		bmp.close();
+		const { width, height } = canvas;
+		const pixels = ctx.getImageData(0, 0, width, height).data;
+		let left = width, right = -1, top = height, bottom = -1;
+		for (let y = 2; y < height - 2; y++) {
+			for (let x = 2; x < width - 2; x++) {
+				if (pixels[4 * (y * width + x)] < 128) continue;
+				left = Math.min(x, left);
+				right = Math.max(x, right);
+				top = Math.min(y, top);
+				bottom = y;
+			}
+		}
+		check(right >= left, 'Raster contains no text cutout');
+		const mmX = 0.0254 * capture.width / width;
+		const mmY = 0.0254 * capture.height / height;
+		const row = Math.round(top + (bottom - top) * 0.25);
+		let x = 2;
+		while (x < width - 2 && pixels[4 * (row * width + x)] < 128) x++;
+		const firstInk = x;
+		while (x < width - 2 && pixels[4 * (row * width + x)] >= 128) x++;
+		return { width: (right - left + 1) * mmX, height: (bottom - top + 1) * mmY, stem: (x - firstInk) * mmX };
+	}
+
+	async function run() {
+		const html = await (await fetch('../iframe/index.html')).text();
+		const head = '<head><script>window.eda = parent.testEda; window.queryLocalFonts = undefined;<\/script>';
+		frame.srcdoc = html.replace('<head>', head);
+		await until(() => field('fontSize')?.value === '68' && field('previewMeta').textContent.includes('mil'));
+		check(field('textSizing').value === 'font' && field('physicalFields').hidden, 'Legacy options must use Font size');
+		const legacy = await measurePlacement();
+		await setFields({ textSizing: 'physical', textHeightMm: 1.5, textWidthMm: 2, strokeMm: '' });
+		const naturalStroke = await measurePlacement();
+		near(naturalStroke.width, 2, 0.015, 'Auto-stroke width');
+		near(naturalStroke.height, 1.5, 0.015, 'Auto-stroke height');
+		for (const thickness of [naturalStroke.stem * 0.6, 0.2, naturalStroke.stem * 1.25]) {
+			await setFields({ strokeMm: thickness });
+			const actual = await measurePlacement();
+			near(actual.height, 1.5, 0.015, 'Height with stroke ' + thickness);
+			near(actual.width, 2, 0.015, 'Width with stroke ' + thickness);
+			near(actual.stem, thickness, 0.012, 'H stem with stroke ' + thickness);
+		}
+		await setFields({ textHeightMm: 2.1, textWidthMm: 3.2, strokeMm: 0.2 });
+		const resized = await measurePlacement();
+		near(resized.height, 2.1, 0.015, 'Changed height');
+		near(resized.width, 3.2, 0.015, 'Changed width');
+		near(resized.stem, 0.2, 0.012, 'Stroke stays constant while resizing');
+		await setFields({ textHeightMm: 1.5, textWidthMm: '', strokeMm: 0.2, quality: 'fast' });
+		const proportional = await measurePlacement();
+		near(proportional.height, 1.5, 0.025, 'Proportional height at Fast quality');
+		near(proportional.stem, 0.2, 0.02, 'Proportional stem at Fast quality');
+		check(Math.abs(proportional.width - 2) > 0.1, 'Auto width restores font proportions');
+		await setFields({ labelText: 'Ågj', textWidthMm: 4, quality: 'ultra', layer: 4, mirror: 'true', textAlign: 'right' });
+		const accents = await measurePlacement();
+		near(accents.height, 1.5, 0.015, 'Accents and descenders');
+		near(accents.width, 4, 0.015, 'Whole inscription width');
+		check(placement[3] === 4 && placement[7] === true, 'Bottom mirror is passed to EasyEDA');
+		await setFields({ labelText: 'GND', textWidthMm: 4, strokeMm: 0.2 });
+		field('savePresetBtn').click();
+		await until(() => field('actionDialog').open);
+		field('actionValue').value = 'Metric';
+		field('actionConfirm').click();
+		await until(() => stored['labelMaker.presets.v1'].Metric);
+		await setFields({ presetSelect: 'Legacy' });
+		check(field('textSizing').value === 'font' && field('fontSize').value === '77', 'Legacy preset size');
+		await setFields({ presetSelect: 'Metric' });
+		check(field('textSizing').value === 'physical' && field('textHeightMm').value === '1.5' &&
+			field('textWidthMm').value === '4' && field('strokeMm').value === '0.2', 'Metric preset round trip');
+		near((await measurePlacement()).width, 4, 0.015, 'Restored preset cutout');
+		await setFields({ textWidthMm: 0.1, strokeMm: 1 });
+		check(field('placeBtn').disabled, 'Incompatible width and stroke must prevent placement');
+		await setFields({ labelText: 'H', textSizing: 'font', fontSize: 68 });
+		const restored = await measurePlacement();
+		near(restored.width, legacy.width, 0.001, 'Legacy drawing after switching back');
+		near(restored.height, legacy.height, 0.001, 'Legacy height after switching back');
+		results.textContent = 'Passed. Legacy sizing, physical dimensions, stroke, quality, mirror, presets and placement raster.';
+		results.dataset.status = 'passed';
+	}
+	run().catch(error => {
+		results.textContent = error.stack;
+		results.dataset.status = 'failed';
+	});
+</script>
+</html>
