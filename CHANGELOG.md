@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0
+
+- Added a mil/mm toggle for font size, physical lettering, label width, padding, corner radii and preview measurements.
+- The dialog remembers the selected unit across presets and sessions. Switching units preserves the exact dimensions used for PCB placement.
+
 ## 1.2.0
 
 - Added optional millimetre controls for visible text height, total text width, and reference stem thickness. The preview and PCB placement use the same measurements.

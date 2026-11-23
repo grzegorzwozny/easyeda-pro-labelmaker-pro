@@ -3,7 +3,7 @@
 	"uuid": "9c6e8a9f4b31409bb5fc4f61af8f2b74",
 	"displayName": "Label Maker Pro",
 	"description": "Create PCB silkscreen labels with cutout text, shaped ends, and independent corner radii.",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"publisher": "Moisen",
 	"engines": {
 		"eda": "^3.0.0"

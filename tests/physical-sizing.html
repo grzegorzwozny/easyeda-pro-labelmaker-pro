@@ -54,6 +54,11 @@
 		await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 	}
 
+	async function selectUnit(unit) {
+		frame.contentDocument.querySelector('input[name="displayUnit"][value="' + unit + '"]').click();
+		await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+	}
+
 	// Read the white letter cutouts from the exact PNG passed to EasyEDA, inside a flat black label.
 	async function measurePlacement() {
 		check(!field('placeBtn').disabled, field('previewMeta').textContent);
@@ -95,10 +100,30 @@
 	async function run() {
 		const html = await (await fetch('../iframe/index.html')).text();
 		const head = '<head><script>window.eda = parent.testEda; window.queryLocalFonts = undefined;<\/script>';
-		frame.srcdoc = html.replace('<head>', head);
-		await until(() => field('fontSize')?.value === '68' && field('previewMeta').textContent.includes('mil'));
+		async function reopen() {
+			const loaded = new Promise(resolve => frame.addEventListener('load', resolve, { once: true }));
+			frame.srcdoc = html.replace('<head>', head);
+			await loaded;
+			await until(() => field('presetSelect')?.options.length && !field('previewMeta').textContent.includes('--'));
+		}
+		await reopen();
+		check(field('unitMil').checked && field('fontSize').value === '68', 'Legacy nominal options open in mil');
 		check(field('textSizing').value === 'font' && field('physicalFields').hidden, 'Legacy options must use Font size');
 		const legacy = await measurePlacement();
+		const oldPreview = field('previewCanvas').toDataURL();
+		const oldPng = new Uint8Array(await capture.blob.arrayBuffer());
+		const oldWidth = placement[4], oldHeight = placement[5];
+		await selectUnit('mm');
+		near(field('fontSize').valueAsNumber, 68 * 0.0254, 1e-12, 'Font size in mm');
+		check(field('paddingX').value === '0.254' && field('paddingX').min === '-5.08', 'Padding value and limit in mm');
+		check(field('fontSize').min === '0.0508' && field('labelWidth').max === '508', 'Metric input bounds');
+		check(field('strokeMm').value === '' && field('textWidthMm').value === '', 'Auto fields stay empty');
+		check(field('previewMeta').textContent.endsWith('mm'), 'Label readout uses mm');
+		check(field('previewCanvas').toDataURL() === oldPreview, 'Unit switch preserves preview pixels');
+		await measurePlacement();
+		const metricPng = new Uint8Array(await capture.blob.arrayBuffer());
+		check(placement[4] === oldWidth && placement[5] === oldHeight, 'Unit switch preserves exact PCB dimensions');
+		check(oldPng.length === metricPng.length && oldPng.every((v, i) => v === metricPng[i]), 'Identical placement PNG after switching units');
 		await setFields({ textSizing: 'physical', textHeightMm: 1.5, textWidthMm: 2, strokeMm: '' });
 		const naturalStroke = await measurePlacement();
 		near(naturalStroke.width, 2, 0.015, 'Auto-stroke width');
@@ -132,18 +157,49 @@
 		field('actionConfirm').click();
 		await until(() => stored['labelMaker.presets.v1'].Metric);
 		await setFields({ presetSelect: 'Legacy' });
-		check(field('textSizing').value === 'font' && field('fontSize').value === '77', 'Legacy preset size');
+		check(field('unitMm').checked && field('textSizing').value === 'font' && field('fontSize').value === '1.9558', 'Legacy preset in mm');
+		await selectUnit('mil');
+		await setFields({ presetSelect: 'Metric' });
+		near(field('textHeightMm').valueAsNumber, 1.5 / 0.0254, 1e-7, 'Physical text height in mil');
+		near(field('textWidthMm').valueAsNumber, 4 / 0.0254, 1e-6, 'Physical text width in mil');
+		near(field('strokeMm').valueAsNumber, 0.2 / 0.0254, 1e-8, 'Stroke in mil');
+		check(field('previewMeta').textContent.includes('Text 157.48 × 59.06 mil'), 'Physical preview uses mil');
+		await setFields({ textHeightMm: 60, textWidthMm: 180, strokeMm: 8 });
+		near(stored['labelMaker.options.v1'].strokeMm, 8 * 0.0254, 1e-12, 'Mil input saved as physical stroke');
+		await selectUnit('mm');
+		check(field('textHeightMm').value === '1.524' && field('textWidthMm').value === '4.572', 'Edited mil values converted to mm');
 		await setFields({ presetSelect: 'Metric' });
 		check(field('textSizing').value === 'physical' && field('textHeightMm').value === '1.5' &&
 			field('textWidthMm').value === '4' && field('strokeMm').value === '0.2', 'Metric preset round trip');
 		near((await measurePlacement()).width, 4, 0.015, 'Restored preset cutout');
 		await setFields({ textWidthMm: 0.1, strokeMm: 1 });
 		check(field('placeBtn').disabled, 'Incompatible width and stroke must prevent placement');
+		await selectUnit('mil');
 		await setFields({ labelText: 'H', textSizing: 'font', fontSize: 68 });
 		const restored = await measurePlacement();
 		near(restored.width, legacy.width, 0.001, 'Legacy drawing after switching back');
 		near(restored.height, legacy.height, 0.001, 'Legacy height after switching back');
-		results.textContent = 'Passed. Legacy sizing, physical dimensions, stroke, quality, mirror, presets and placement raster.';
+		await selectUnit('mm');
+		await setFields({ paddingX: -0.127, paddingY: 0.254, labelWidth: 5.08,
+			topLeft: 3, topRight: 0.127, bottomLeft: 0.254, bottomRight: 0.0508, textHeightMm: 1.2345678901234 });
+		const saved = stored['labelMaker.options.v1'];
+		near(saved.paddingX, -5, 1e-12, 'Negative padding in storage units');
+		near(saved.width, 200, 1e-12, 'Background width in storage units');
+		check(field('cornerHint').textContent.includes('mm (half'), 'Corner limit in mm');
+		for (let i = 0; i < 4; i++) {
+			await selectUnit('mil');
+			check(field('cornerHint').textContent.includes('mil (half'), 'Corner limit in mil');
+			check(field('bottomLeft').value === '10' && field('bottomRight').value === '2' && field('topRight').value === '5', 'Converted radii');
+			await selectUnit('mm');
+		}
+		check(stored['labelMaker.options.v1'].textHeightMm === 1.2345678901234, 'Repeated switches retain full stored precision');
+		await reopen();
+		check(field('unitMm').checked && field('paddingX').value === '-0.127', 'Unit preference survives reopening');
+		delete stored['labelMaker.options.v1'].displayUnit;
+		stored['labelMaker.options.v1'].textSizing = 'physical';
+		await reopen();
+		check(field('unitMm').checked && field('textWidthMm').value === '0.1', 'Legacy physical settings open in mm');
+		results.textContent = 'Passed. Units, exact placement geometry, legacy settings, presets and physical text sizing.';
 		results.dataset.status = 'passed';
 	}
 	run().catch(error => {

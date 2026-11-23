@@ -78,6 +78,42 @@
 				gap: 12px;
 			}
 
+			.unit-picker, .unit-switch {
+				display: flex;
+				align-items: center;
+			}
+
+			.unit-picker {
+				gap: 6px;
+				color: var(--text-soft);
+				font-size: 12px;
+			}
+
+			.unit-switch {
+				padding: 2px;
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				background: var(--field);
+			}
+
+			.unit-switch label { position: relative; }
+			.unit-switch input {
+				position: absolute;
+				inset: 0;
+				height: 100%;
+				margin: 0;
+				opacity: 0;
+				cursor: pointer;
+			}
+			.unit-switch span {
+				min-width: 34px;
+				padding: 4px 7px;
+				border-radius: 5px;
+				text-align: center;
+			}
+			.unit-switch input:checked + span { background: var(--primary); color: #fff; }
+			.unit-switch input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 1px; }
+
 			.title {
 				font-size: 18px;
 				font-weight: 600;
@@ -313,6 +349,13 @@
 					<h1 class="title">Label Maker Pro</h1>
 					<p class="subtitle">Silkscreen labels with cutout text.</p>
 				</div>
+				<div class="unit-picker">
+					<span id="unitLabel">Units</span>
+					<div class="unit-switch" role="radiogroup" aria-labelledby="unitLabel">
+						<label title="Thousandths of an inch"><input type="radio" name="displayUnit" id="unitMil" value="mil" checked /><span>mil</span></label>
+						<label title="Millimetres"><input type="radio" name="displayUnit" id="unitMm" value="mm" /><span>mm</span></label>
+					</div>
+				</div>
 			</header>
 
 			<div class="panel">
@@ -346,15 +389,15 @@
 				</div>
 
 				<details id="cornerSettings" class="corner-settings" hidden>
-					<summary>Corner radii (mil)</summary>
+					<summary>Corner radii (<span data-display-unit>mil</span>)</summary>
 					<div class="corner-grid">
 						<div id="leftCorners" class="corner-side row cols-2">
-							<label>Top-left <input id="topLeft" type="number" min="0" step="any" inputmode="decimal" /></label>
-							<label>Bottom-left <input id="bottomLeft" type="number" min="0" step="any" inputmode="decimal" /></label>
+							<label>Top-left <input id="topLeft" data-storage-unit="mil" type="number" min="0" max="20000" step="any" inputmode="decimal" /></label>
+							<label>Bottom-left <input id="bottomLeft" data-storage-unit="mil" type="number" min="0" max="20000" step="any" inputmode="decimal" /></label>
 						</div>
 						<div id="rightCorners" class="corner-side row cols-2">
-							<label>Top-right <input id="topRight" type="number" min="0" step="any" inputmode="decimal" /></label>
-							<label>Bottom-right <input id="bottomRight" type="number" min="0" step="any" inputmode="decimal" /></label>
+							<label>Top-right <input id="topRight" data-storage-unit="mil" type="number" min="0" max="20000" step="any" inputmode="decimal" /></label>
+							<label>Bottom-right <input id="bottomRight" data-storage-unit="mil" type="number" min="0" max="20000" step="any" inputmode="decimal" /></label>
 						</div>
 					</div>
 					<p class="hint" id="cornerHint">0 keeps the corner square.</p>
@@ -406,28 +449,28 @@
 						Text sizing
 						<select id="textSizing">
 							<option value="font">Font size</option>
-							<option value="physical">Physical dimensions (mm)</option>
+							<option value="physical">Physical dimensions</option>
 						</select>
 					</label>
 					<label id="fontSizeField">
-						Font Size (mil)
-						<input id="fontSize" type="number" step="1" min="2" max="1000" />
+						<span>Font Size (<span data-display-unit>mil</span>)</span>
+						<input id="fontSize" data-option="size" data-storage-unit="mil" type="number" step="any" min="2" max="1000" inputmode="decimal" />
 					</label>
 					<label id="textHeightField" hidden>
-						Text height (mm)
-						<input id="textHeightMm" type="number" step="any" min="0.01" max="127" inputmode="decimal" />
+						<span>Text height (<span data-display-unit>mil</span>)</span>
+						<input id="textHeightMm" data-storage-unit="mm" type="number" step="any" min="0.01" max="127" inputmode="decimal" />
 					</label>
 				</div>
 
 				<div id="physicalFields" hidden>
 					<div class="row cols-2">
 						<label>
-							Text width (mm)
-							<input id="textWidthMm" type="number" step="any" min="0" max="254" inputmode="decimal" placeholder="Auto" />
+							<span>Text width (<span data-display-unit>mil</span>)</span>
+							<input id="textWidthMm" data-storage-unit="mm" data-auto-zero type="number" step="any" min="0" max="254" inputmode="decimal" placeholder="Auto" />
 						</label>
 						<label>
-							Stroke thickness (mm)
-							<input id="strokeMm" type="number" step="any" min="0" max="127" inputmode="decimal" placeholder="Auto" />
+							<span>Stroke thickness (<span data-display-unit>mil</span>)</span>
+							<input id="strokeMm" data-storage-unit="mm" data-auto-zero type="number" step="any" min="0" max="127" inputmode="decimal" placeholder="Auto" />
 						</label>
 					</div>
 					<p class="hint">Auto width keeps the font proportions. Auto stroke uses the font weight. A numeric stroke sets the width of the upright stem in H.</p>
@@ -435,16 +478,16 @@
 
 				<div class="row cols-3">
 					<label>
-						Label width (mil, 0 = Auto)
-						<input id="labelWidth" type="number" step="1" min="0" max="20000" />
+						<span>Label width (<span data-display-unit>mil</span>, 0 = Auto)</span>
+						<input id="labelWidth" data-option="width" data-storage-unit="mil" type="number" step="any" min="0" max="20000" inputmode="decimal" />
 					</label>
 					<label>
-						Padding X (mil)
-						<input id="paddingX" type="number" step="1" min="-200" max="1000" />
+						<span>Padding X (<span data-display-unit>mil</span>)</span>
+						<input id="paddingX" data-storage-unit="mil" type="number" step="any" min="-200" max="1000" inputmode="decimal" />
 					</label>
 					<label>
-						Padding Y (mil)
-						<input id="paddingY" type="number" step="1" min="-200" max="1000" />
+						<span>Padding Y (<span data-display-unit>mil</span>)</span>
+						<input id="paddingY" data-storage-unit="mil" type="number" step="any" min="-200" max="1000" inputmode="decimal" />
 					</label>
 				</div>
 
@@ -568,10 +611,6 @@
 					leftCorners: document.getElementById('leftCorners'),
 					rightCorners: document.getElementById('rightCorners'),
 					cornerHint: document.getElementById('cornerHint'),
-					topLeft: document.getElementById('topLeft'),
-					topRight: document.getElementById('topRight'),
-					bottomLeft: document.getElementById('bottomLeft'),
-					bottomRight: document.getElementById('bottomRight'),
 					labelText: document.getElementById('labelText'),
 					fontFamily: document.getElementById('fontFamily'),
 					fontWeight: document.getElementById('fontWeight'),
@@ -579,17 +618,10 @@
 					quality: document.getElementById('quality'),
 					addFontBtn: document.getElementById('addFontBtn'),
 					importFontBtn: document.getElementById('importFontBtn'),
-					fontSize: document.getElementById('fontSize'),
 					textSizing: document.getElementById('textSizing'),
 					fontSizeField: document.getElementById('fontSizeField'),
 					textHeightField: document.getElementById('textHeightField'),
 					physicalFields: document.getElementById('physicalFields'),
-					textHeightMm: document.getElementById('textHeightMm'),
-					textWidthMm: document.getElementById('textWidthMm'),
-					strokeMm: document.getElementById('strokeMm'),
-					paddingX: document.getElementById('paddingX'),
-					paddingY: document.getElementById('paddingY'),
-					labelWidth: document.getElementById('labelWidth'),
 					textAlign: document.getElementById('textAlign'),
 					mirror: document.getElementById('mirror'),
 					previewCanvas: document.getElementById('previewCanvas'),
@@ -602,6 +634,21 @@
 					actionValue: document.getElementById('actionValue'),
 					actionConfirm: document.getElementById('actionConfirm'),
 				};
+
+				// These units and limits also describe the on-disk format of existing presets.
+				const dimensionFields = new Map(Array.from(document.querySelectorAll('input[data-storage-unit]'), input => [
+					input, {
+						key: input.dataset.option || input.id,
+						unit: input.dataset.storageUnit,
+						min: Number(input.min),
+						max: Number(input.max),
+						autoZero: input.hasAttribute('data-auto-zero'),
+					},
+				]));
+				const unitControls = document.querySelectorAll('input[name="displayUnit"]');
+				const unitLabels = document.querySelectorAll('[data-display-unit]');
+				const dimensionValues = {};
+				let displayUnit = 'mil';
 
 				const previewContext = elements.previewCanvas.getContext('2d');
 				const measureCanvas = document.createElement('canvas');
@@ -693,6 +740,34 @@
 					return Math.min(maximum, Math.max(minimum, n));
 				}
 
+				function convertLength(value, from, to) {
+					if (from === to) return value;
+					return from === 'mil' ? value * MM_PER_MIL : value / MM_PER_MIL;
+				}
+
+				function displayNumber(value, storageUnit) {
+					return String(Number(convertLength(value, storageUnit, displayUnit).toPrecision(9)));
+				}
+
+				function showDimension(input, field) {
+					const value = dimensionValues[field.key];
+					input.value = field.autoZero && value === 0 ? '' : displayNumber(value, field.unit);
+				}
+
+				function showUnits() {
+					for (const control of unitControls) control.checked = control.value === displayUnit;
+					for (const label of unitLabels) label.textContent = displayUnit;
+					for (const [input, field] of dimensionFields) {
+						input.min = displayNumber(field.min, field.unit);
+						input.max = displayNumber(field.max, field.unit);
+						showDimension(input, field);
+					}
+				}
+
+				function formatMil(value) {
+					return convertLength(value, 'mil', displayUnit).toFixed(displayUnit === 'mil' ? 2 : 3);
+				}
+
 				function sanitizeOptions(raw) {
 					const next = { ...DEFAULT_OPTIONS };
 					if (!raw || typeof raw !== 'object') {
@@ -701,21 +776,14 @@
 
 					if (SHAPES.includes(raw.leftShape)) next.leftShape = raw.leftShape;
 					if (SHAPES.includes(raw.rightShape)) next.rightShape = raw.rightShape;
-					for (const corner of CORNERS) {
-						next[corner] = clampNumber(raw[corner], 0, 20000, 0);
+					for (const { key, min, max } of dimensionFields.values()) {
+						next[key] = clampNumber(raw[key], min, max, next[key]);
 					}
 					next.text = typeof raw.text === 'string' ? raw.text.slice(0, 80) : next.text;
 					next.font = typeof raw.font === 'string' && raw.font.length ? raw.font : next.font;
 					const weight = Number(raw.fontWeight);
 					if ([400, 500, 600, 700, 800].includes(weight)) next.fontWeight = weight;
-					next.size = clampNumber(raw.size, 2, 1000, next.size);
 					next.textSizing = raw.textSizing === 'physical' ? 'physical' : 'font';
-					next.textHeightMm = clampNumber(raw.textHeightMm, 0.01, 127, next.textHeightMm);
-					next.textWidthMm = clampNumber(raw.textWidthMm, 0, 254, 0);
-					next.strokeMm = clampNumber(raw.strokeMm, 0, 127, 0);
-					next.paddingX = clampNumber(raw.paddingX, -200, 1000, next.paddingX);
-					next.paddingY = clampNumber(raw.paddingY, -200, 1000, next.paddingY);
-					next.width = clampNumber(raw.width, 0, 20000, next.width);
 					next.textAlign = ['left', 'center', 'right'].includes(raw.textAlign) ? raw.textAlign : next.textAlign;
 					next.layer = Number(raw.layer) === 4 ? 4 : 3;
 					next.mirror = raw.mirror === true || raw.mirror === 'true';
@@ -725,23 +793,13 @@
 
 				function getFormOptions() {
 					return sanitizeOptions({
+						...dimensionValues,
 						leftShape: elements.leftShape.value,
 						rightShape: elements.rightShape.value,
-						topLeft: elements.topLeft.value,
-						topRight: elements.topRight.value,
-						bottomLeft: elements.bottomLeft.value,
-						bottomRight: elements.bottomRight.value,
 						text: elements.labelText.value,
 						font: elements.fontFamily.value,
 						fontWeight: elements.fontWeight.value,
-						size: elements.fontSize.value,
 						textSizing: elements.textSizing.value,
-						textHeightMm: elements.textHeightMm.valueAsNumber,
-						textWidthMm: elements.textWidthMm.valueAsNumber,
-						strokeMm: elements.strokeMm.valueAsNumber,
-						paddingX: elements.paddingX.value,
-						paddingY: elements.paddingY.value,
-						width: elements.labelWidth.value,
 						textAlign: elements.textAlign.value,
 						layer: elements.layer.value,
 						mirror: elements.mirror.value === 'true',
@@ -752,20 +810,12 @@
 				function setFormOptions(options) {
 					elements.leftShape.value = options.leftShape;
 					elements.rightShape.value = options.rightShape;
-					for (const corner of CORNERS) {
-						elements[corner].value = String(options[corner]);
-					}
+					for (const { key } of dimensionFields.values()) dimensionValues[key] = options[key];
+					showUnits();
 					elements.labelText.value = options.text;
 					refreshFontSelect(options.font);
 					elements.fontWeight.value = String(options.fontWeight);
-					elements.fontSize.value = String(options.size);
 					elements.textSizing.value = options.textSizing;
-					elements.textHeightMm.value = String(options.textHeightMm);
-					elements.textWidthMm.value = options.textWidthMm || '';
-					elements.strokeMm.value = options.strokeMm || '';
-					elements.paddingX.value = String(options.paddingX);
-					elements.paddingY.value = String(options.paddingY);
-					elements.labelWidth.value = String(options.width);
 					elements.textAlign.value = options.textAlign;
 					elements.layer.value = String(options.layer);
 					elements.mirror.value = String(options.mirror);
@@ -1253,13 +1303,13 @@
 					drawLabel(previewContext, model, ink, false);
 					previewContext.restore();
 
-					elements.previewMeta.textContent = `Label size: ${model.widthMil.toFixed(1)} × ${model.heightMil.toFixed(1)} mil${model.mirror ? ' · mirrored' : ''}`;
+					elements.previewMeta.textContent = `Label size: ${formatMil(model.widthMil)} × ${formatMil(model.heightMil)} ${displayUnit}${model.mirror ? ' · mirrored' : ''}`;
 					if (model.physical) {
-						elements.previewMeta.textContent += ` · Text ${(model.physical.width * MM_PER_MIL).toFixed(2)} × ${options.textHeightMm.toFixed(2)} mm`;
+						elements.previewMeta.textContent += ` · Text ${formatMil(model.physical.width)} × ${formatMil(model.physical.height)} ${displayUnit}`;
 					}
 					const limited = CORNERS.filter((corner) => model.radii[corner] > 0 && model.radii[corner] < options[corner]);
 					elements.cornerHint.textContent = limited.length
-						? `Large radii are limited to ${(model.heightMil / 2).toFixed(2)} mil (half the label height).`
+						? `Large radii are limited to ${formatMil(model.heightMil / 2)} ${displayUnit} (half the label height).`
 						: '0 keeps the corner square. The maximum radius is half the label height.';
 				}
 
@@ -1275,7 +1325,7 @@
 
 				function saveCurrentOptions() {
 					if (!window.eda?.sys_Storage?.setExtensionUserConfig) return;
-					const options = getFormOptions();
+					const options = { ...getFormOptions(), displayUnit };
 					optionsWrite = optionsWrite
 						.then(() => eda.sys_Storage.setExtensionUserConfig(STORAGE_OPTIONS_KEY, options))
 						.catch((error) => console.warn('saveCurrentOptions failed', error));
@@ -1340,6 +1390,12 @@
 					}
 
 					const options = sanitizeOptions(loadedOptions);
+					// Older versions used mm for physical text and mil for nominal font size.
+					if (loadedOptions?.displayUnit === 'mm' || loadedOptions?.displayUnit === 'mil') {
+						displayUnit = loadedOptions.displayUnit;
+					} else {
+						displayUnit = options.textSizing === 'physical' ? 'mm' : 'mil';
+					}
 					setFormOptions(options);
 					refreshPresetSelect('Default');
 				}
@@ -1766,38 +1822,45 @@
 				}
 
 				function bindEvents() {
+					for (const control of unitControls) {
+						control.addEventListener('change', () => {
+							if (!control.checked) return;
+							displayUnit = control.value;
+							showUnits();
+							requestRenderPreview();
+							saveCurrentOptions();
+						});
+					}
+
 					const optionControls = [
 						elements.leftShape,
 						elements.rightShape,
-						...CORNERS.map((corner) => elements[corner]),
+						...dimensionFields.keys(),
 						elements.labelText,
 						elements.fontFamily,
 						elements.fontWeight,
 						elements.layer,
 						elements.quality,
-						elements.fontSize,
 						elements.textSizing,
-						elements.textHeightMm,
-						elements.textWidthMm,
-						elements.strokeMm,
-						elements.paddingX,
-						elements.paddingY,
-						elements.labelWidth,
 						elements.textAlign,
 						elements.mirror,
 					];
 
 					for (const control of optionControls) {
-						control.addEventListener('input', handleOptionChanged);
-						control.addEventListener('change', () => {
-							if (control.type === 'number') {
-								const key = { fontSize: 'size', labelWidth: 'width' }[control.id] || control.id;
-								const value = getFormOptions()[key];
-								control.value = value === 0 && (key === 'textWidthMm' || key === 'strokeMm') ? '' : String(value);
+						const field = dimensionFields.get(control);
+						const edited = (event) => {
+							if (field) {
+								// Keep full precision in storage units. Only an edit reads the displayed number back.
+								const number = control.value === '' && field.key !== 'textHeightMm' ? 0 : control.valueAsNumber;
+								const value = convertLength(number, displayUnit, field.unit);
+								dimensionValues[field.key] = clampNumber(value, field.min, field.max, DEFAULT_OPTIONS[field.key]);
+								if (event.type === 'change') showDimension(control, field);
 							}
 							handleOptionChanged();
-							saveCurrentOptions();
-						});
+							if (event.type === 'change') saveCurrentOptions();
+						};
+						control.addEventListener('input', edited);
+						control.addEventListener('change', edited);
 					}
 
 					elements.labelText.addEventListener('keydown', (event) => {
