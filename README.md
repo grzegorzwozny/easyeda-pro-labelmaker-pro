@@ -2,13 +2,13 @@
 
 Create PCB silkscreen labels with cutout text for connectors, test points, and board markings. Shape each end, fine-tune the corners, and see the result before placing it on the board.
 
-[Download v1.1.0 (.eext)](https://github.com/grzegorzwozny/easyeda-pro-labelmaker-pro/releases/download/v1.1.0/eext-labelmaker-pro_v1.1.0.eext) · [Changelog](CHANGELOG.md)
+[Download v1.1.1 (.eext)](https://raw.githubusercontent.com/grzegorzwozny/easyeda-pro-labelmaker-pro/v1.1.1/build/dist/eext-labelmaker-pro_v1.1.1.eext) · [Changelog](CHANGELOG.md)
 
 ## See it in action
 
 ![Animated Label Maker Pro demo showing independent corner radii, mixed end shapes, bottom-layer mirroring, and the light and dark themes](docs/label-maker-pro-demo.gif)
 
-The demo uses the extension’s preview with a sample label. It shows how to round two corners independently, combine flat and curved ends, and mirror a bottom silkscreen label.
+Watch the label change as you round individual corners, combine flat and curved ends, and switch on bottom silkscreen mirroring. [View the animation on GitHub](https://github.com/grzegorzwozny/easyeda-pro-labelmaker-pro/blob/v1.1.1/docs/label-maker-pro-demo.gif)
 
 ## Features
 
@@ -19,12 +19,12 @@ The demo uses the extension’s preview with a sample label. It shows how to rou
 
 ## Install or update in EasyEDA Pro 3.x
 
-1. Download the `.eext` file from [GitHub Releases](https://github.com/grzegorzwozny/easyeda-pro-labelmaker-pro/releases) or build it locally.
+1. Download the `.eext` file at the top of this page or build it locally.
 2. In EasyEDA Pro, open **Advanced → Extension Manager → Import** and select the `.eext` file.
-3. For an update from v1.0.0, import the new file over the existing installation. Check the active version and enable **Label Maker Pro** under **Installed**.
+3. To update an installed copy, import the new file over it. Under **Installed**, check that **Label Maker Pro 1.1.1** is enabled.
 4. Open a PCB and choose **Label Maker → Open Label Maker…**. If **Show in top menu** is off, look under **Advanced**.
 
-The update uses the same extension UUID and preset storage keys. Existing settings and presets load with zero radii.
+The update keeps your settings and presets. Presets from v1.0.0 start with square corners.
 
 ## Create a label
 
@@ -39,7 +39,7 @@ Use **Save As**, **Update**, and **Delete** to manage custom presets. **Load Fon
 
 ![Label Maker Pro in EasyEDA Pro 3.2.209 with a dark interface and an ANT-01 label with rounded top corners](docs/label-maker-pro-dark.png)
 
-The screenshot shows the extension running in EasyEDA Pro 3.2.209, with 20 mil radii on both top corners and square bottom corners.
+The screenshot shows the extension running in EasyEDA Pro 3.2.209, with 20 mil radii on both top corners and square bottom corners. [View the full-size screenshot on GitHub](https://github.com/grzegorzwozny/easyeda-pro-labelmaker-pro/blob/v1.1.1/docs/label-maker-pro-dark.png)
 
 ## Build from source
 
@@ -50,8 +50,8 @@ npm ci
 npm run build
 ```
 
-The build creates `build/dist/eext-labelmaker-pro_v1.1.0.eext`.
+The build creates `build/dist/eext-labelmaker-pro_v1.1.1.eext`.
 
 ## Extension Marketplace
 
-Maintainers can submit the `.eext` package through [Extension Management](https://jlcext.com/) for review. For a first listing, confirm the publishing UUID with the Marketplace before changing the existing extension identity. See the [official publishing guide](https://prodocs.easyeda.com/en/api/guide/extensions-marketplace.html).
+To submit a new version, open **Extension Management → Upload Extension** on JLCEXT and select the `.eext` file. The marketplace uses the extension UUID to group versions under the same listing. [Official publishing guide](https://prodocs.easyeda.com/en/api/guide/extensions-marketplace.html)

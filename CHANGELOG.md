@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1
+
+- Bundled the animated label preview and EasyEDA Pro screenshot with the README so both are available in the marketplace package.
+- Updated the extension icon to show a cutout GND silkscreen label.
+
 ## 1.1.0
 
 - Added independent corner radii for flat ends, with live preview and preset support.

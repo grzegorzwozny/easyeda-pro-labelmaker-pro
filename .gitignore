@@ -3,6 +3,7 @@
 !/.vscode/settings.json
 /coverage/
 /dist/
+/eext-labelmaker-pro_v*.eext
 /node_modules/
 /.eslintcache
 debug.log
